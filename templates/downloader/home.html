@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+
+{% block title %}Video Downloader - Download Videos Online{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4">
+    <div class="bg-white rounded-lg shadow-lg p-6">
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-8">
+            Online Video Downloader
+        </h1>
+        
+        <div class="mb-8">
+            <label class="block text-gray-700 text-sm font-bold mb-2">
+                Paste your video URL:
+            </label>
+            <input type="url" 
+                   id="videoUrl" 
+                   placeholder="https://www.youtube.com/watch?v=..." 
+                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+            <button id="fetchBtn" 
+                    class="mt-4 w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition duration-300">
+                Get Video Information
+            </button>
+        </div>
+        
+        <div id="loading" class="hidden text-center py-8">
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <p class="mt-2 text-gray-600">Fetching video information...</p>
+        </div>
+        
+        <div id="videoInfo" class="hidden">
+            <div class="border-t pt-6">
+                <div class="flex flex-col md:flex-row gap-6">
+                    <img id="thumbnail" src="" alt="Video thumbnail" class="w-full md:w-64 rounded-lg shadow">
+                    <div class="flex-1">
+                        <h2 id="title" class="text-xl font-bold text-gray-800 mb-2"></h2>
+                        <p class="text-gray-600 mb-2">Duration: <span id="duration"></span></p>
+                        <div class="mt-4">
+                            <h3 class="font-bold text-gray-700 mb-2">Available Resolutions:</h3>
+                            <div id="formats" class="grid grid-cols-2 md:grid-cols-4 gap-3"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="downloadProgress" class="hidden mt-6">
+            <div class="bg-gray-200 rounded-full h-2">
+                <div id="progressBar" class="bg-green-600 rounded-full h-2 transition-all duration-500" style="width: 0%"></div>
+            </div>
+            <p id="downloadStatus" class="text-center mt-2 text-gray-600">Starting download...</p>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentDownloadId = null;
+
+$('#fetchBtn').click(function() {
+    const url = $('#videoUrl').val();
+    if (!url) {
+        alert('Please enter a video URL');
+        return;
+    }
+    
+    $('#loading').removeClass('hidden');
+    $('#videoInfo').addClass('hidden');
+    
+    $.ajax({
+        url: '/get-video-info/',
+        method: 'POST',
+        data: { video_url: url },
+        headers: { 'X-CSRFToken': getCookie('csrftoken') },
+        success: function(data) {
+            if (data.status === 'processing') {
+                checkVideoStatus(data.task_id);
+            }
+        },
+        error: function(xhr) {
+            $('#loading').addClass('hidden');
+            alert('Error: ' + xhr.responseJSON?.error || 'Something went wrong');
+        }
+    });
+});
+
+function checkVideoStatus(taskId) {
+    $.get('/check-video-status/' + taskId + '/', function(data) {
+        if (data.status === 'loading') {
+            setTimeout(() => checkVideoStatus(taskId), 2000);
+        } else if (data.status === 'ready') {
+            $('#loading').addClass('hidden');
+            currentDownloadId = data.download_id;
+            displayVideoInfo(data);
+        } else if (data.status === 'error') {
+            $('#loading').addClass('hidden');
+            alert('Error: ' + data.error);
+        }
+    });
+}
+
+function displayVideoInfo(data) {
+    $('#thumbnail').attr('src', data.thumbnail);
+    $('#title').text(data.title);
+    $('#duration').text(data.duration);
+    
+    const formatsHtml = data.formats.map(fmt => `
+        <button onclick="startDownload('${fmt.format_id}')" 
+                class="bg-gray-200 hover:bg-blue-600 hover:text-white px-4 py-2 rounded-lg transition">
+            ${fmt.resolution} ${fmt.filesize ? '(' + fmt.filesize + ')' : ''}
+        </button>
+    `).join('');
+    
+    $('#formats').html(formatsHtml);
+    $('#videoInfo').removeClass('hidden');
+}
+
+function startDownload(formatId) {
+    $('#downloadProgress').removeClass('hidden');
+    
+    $.ajax({
+        url: '/start-download/',
+        method: 'POST',
+        data: { download_id: currentDownloadId, format_id: formatId },
+        headers: { 'X-CSRFToken': getCookie('csrftoken') },
+        success: function(data) {
+            if (data.status === 'downloading') {
+                checkDownloadStatus(data.task_id);
+            }
+        },
+        error: function() {
+            alert('Download failed to start');
+        }
+    });
+}
+
+function checkDownloadStatus(taskId) {
+    $.get('/check-download-status/' + taskId + '/', function(data) {
+        if (data.status === 'downloading') {
+            $('#progressBar').css('width', '50%');
+            $('#downloadStatus').text('Downloading...');
+            setTimeout(() => checkDownloadStatus(taskId), 2000);
+        } else if (data.status === 'completed') {
+            $('#progressBar').css('width', '100%');
+            $('#downloadStatus').html(`Download complete! <a href="${data.file_url}" class="text-blue-600 underline">Click here to save</a>`);
+        } else if (data.status === 'failed') {
+            $('#downloadStatus').text('Download failed: ' + (data.error || 'Unknown error'));
+        }
+    });
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}
