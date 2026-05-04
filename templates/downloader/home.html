@@ -1,42 +1,79 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Video Downloader - Download Videos Online{% endblock %}
+{% block title %}Universal Media Downloader - Download Videos & Images{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto px-4">
+<div class="max-w-6xl mx-auto px-4">
+    <!-- Supported Platforms Banner -->
+    <div class="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg shadow-lg p-6 mb-8 text-white">
+        <h2 class="text-2xl font-bold text-center mb-4">Supported Platforms</h2>
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
+            <div><i class="fab fa-youtube text-3xl"></i><p class="text-sm mt-1">YouTube</p></div>
+            <div><i class="fab fa-instagram text-3xl"></i><p class="text-sm mt-1">Instagram</p></div>
+            <div><i class="fab fa-facebook text-3xl"></i><p class="text-sm mt-1">Facebook</p></div>
+            <div><i class="fab fa-tiktok text-3xl"></i><p class="text-sm mt-1">TikTok</p></div>
+            <div><i class="fab fa-pinterest text-3xl"></i><p class="text-sm mt-1">Pinterest</p></div>
+            <div><i class="fab fa-twitter text-3xl"></i><p class="text-sm mt-1">Twitter/X</p></div>
+            <div><i class="fab fa-reddit text-3xl"></i><p class="text-sm mt-1">Reddit</p></div>
+            <div><i class="fab fa-vimeo text-3xl"></i><p class="text-sm mt-1">Vimeo</p></div>
+            <div><i class="fab fa-twitch text-3xl"></i><p class="text-sm mt-1">Twitch</p></div>
+            <div><i class="fas fa-video text-3xl"></i><p class="text-sm mt-1">Dailymotion</p></div>
+        </div>
+    </div>
+    
     <div class="bg-white rounded-lg shadow-lg p-6">
-        <h1 class="text-3xl font-bold text-center text-gray-800 mb-8">
-            Online Video Downloader
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-4">
+            Universal Media Downloader
         </h1>
+        <p class="text-center text-gray-600 mb-8">
+            Download videos, images, and reels from any platform - Free & Fast
+        </p>
         
         <div class="mb-8">
             <label class="block text-gray-700 text-sm font-bold mb-2">
-                Paste your video URL:
+                Paste your media URL:
             </label>
             <input type="url" 
-                   id="videoUrl" 
-                   placeholder="https://www.youtube.com/watch?v=..." 
-                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                   id="mediaUrl" 
+                   placeholder="https://www.youtube.com/watch?v=... or https://www.instagram.com/p/..." 
+                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
             <button id="fetchBtn" 
-                    class="mt-4 w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition duration-300">
-                Get Video Information
+                    class="mt-4 w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-lg hover:from-blue-700 hover:to-purple-700 transition duration-300 font-semibold">
+                <i class="fas fa-search mr-2"></i> Get Media Information
             </button>
         </div>
         
         <div id="loading" class="hidden text-center py-8">
-            <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <p class="mt-2 text-gray-600">Fetching video information...</p>
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            <p class="mt-4 text-gray-600">Fetching media information from server...</p>
         </div>
         
         <div id="videoInfo" class="hidden">
             <div class="border-t pt-6">
                 <div class="flex flex-col md:flex-row gap-6">
-                    <img id="thumbnail" src="" alt="Video thumbnail" class="w-full md:w-64 rounded-lg shadow">
+                    <img id="thumbnail" src="" alt="Media thumbnail" class="w-full md:w-64 rounded-lg shadow object-cover">
                     <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span id="platformIcon" class="text-2xl"></span>
+                            <span id="platform" class="text-sm font-semibold px-2 py-1 bg-gray-200 rounded"></span>
+                            <span id="mediaTypeBadge" class="text-sm font-semibold px-2 py-1 bg-blue-100 text-blue-800 rounded"></span>
+                        </div>
                         <h2 id="title" class="text-xl font-bold text-gray-800 mb-2"></h2>
-                        <p class="text-gray-600 mb-2">Duration: <span id="duration"></span></p>
+                        <p class="text-gray-600 mb-1"><i class="fas fa-user mr-2"></i> <span id="uploader"></span></p>
+                        <p class="text-gray-600 mb-3"><i class="fas fa-clock mr-2"></i> Duration: <span id="duration"></span></p>
+                        
+                        <!-- Instagram specific info -->
+                        <div id="instagramInfo" class="hidden mb-3">
+                            <p id="caption" class="text-gray-600 text-sm italic mb-1"></p>
+                            <div class="flex gap-4 text-sm text-gray-500">
+                                <span><i class="fas fa-heart"></i> <span id="likeCount"></span> likes</span>
+                                <span><i class="fas fa-comment"></i> <span id="commentCount"></span> comments</span>
+                            </div>
+                        </div>
+                        
                         <div class="mt-4">
-                            <h3 class="font-bold text-gray-700 mb-2">Available Resolutions:</h3>
+                            <h3 class="font-bold text-gray-700 mb-3">Available Formats:</h3>
                             <div id="formats" class="grid grid-cols-2 md:grid-cols-4 gap-3"></div>
                         </div>
                     </div>
@@ -45,52 +82,87 @@
         </div>
         
         <div id="downloadProgress" class="hidden mt-6">
-            <div class="bg-gray-200 rounded-full h-2">
-                <div id="progressBar" class="bg-green-600 rounded-full h-2 transition-all duration-500" style="width: 0%"></div>
+            <div class="bg-gray-200 rounded-full h-2 overflow-hidden">
+                <div id="progressBar" class="bg-gradient-to-r from-green-500 to-green-600 rounded-full h-2 transition-all duration-500" style="width: 0%"></div>
             </div>
-            <p id="downloadStatus" class="text-center mt-2 text-gray-600">Starting download...</p>
+            <p id="downloadStatus" class="text-center mt-3 text-gray-600">Starting download...</p>
+        </div>
+    </div>
+    
+    <!-- Features Section -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+        <div class="bg-white rounded-lg shadow p-6 text-center">
+            <i class="fas fa-bolt text-3xl text-yellow-500 mb-3"></i>
+            <h3 class="font-bold text-lg mb-2">Fast Downloads</h3>
+            <p class="text-gray-600">High-speed downloading with async processing</p>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6 text-center">
+            <i class="fas fa-shield-alt text-3xl text-green-500 mb-3"></i>
+            <h3 class="font-bold text-lg mb-2">Secure & Free</h3>
+            <p class="text-gray-600">100% free and secure, no registration required</p>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6 text-center">
+            <i class="fas fa-download text-3xl text-blue-500 mb-3"></i>
+            <h3 class="font-bold text-lg mb-2">Multiple Formats</h3>
+            <p class="text-gray-600">Download in various resolutions and formats</p>
         </div>
     </div>
 </div>
 
+<script src="https://kit.fontawesome.com/your-fontawesome-kit.js"></script>
 <script>
 let currentDownloadId = null;
 
+// Platform icons mapping
+const platformIcons = {
+    'youtube': '<i class="fab fa-youtube text-red-600"></i>',
+    'instagram': '<i class="fab fa-instagram text-pink-600"></i>',
+    'facebook': '<i class="fab fa-facebook text-blue-600"></i>',
+    'tiktok': '<i class="fab fa-tiktok"></i>',
+    'pinterest': '<i class="fab fa-pinterest text-red-600"></i>',
+    'twitter': '<i class="fab fa-twitter text-blue-400"></i>',
+    'reddit': '<i class="fab fa-reddit text-orange-600"></i>',
+    'vimeo': '<i class="fab fa-vimeo text-blue-600"></i>',
+    'dailymotion': '<i class="fab fa-dailymotion text-blue-600"></i>',
+    'twitch': '<i class="fab fa-twitch text-purple-600"></i>'
+};
+
 $('#fetchBtn').click(function() {
-    const url = $('#videoUrl').val();
+    const url = $('#mediaUrl').val();
     if (!url) {
-        alert('Please enter a video URL');
+        alert('Please enter a media URL');
         return;
     }
     
     $('#loading').removeClass('hidden');
     $('#videoInfo').addClass('hidden');
+    $('#downloadProgress').addClass('hidden');
     
     $.ajax({
-        url: '/get-video-info/',
+        url: '/get-media-info/',
         method: 'POST',
-        data: { video_url: url },
+        data: { media_url: url },
         headers: { 'X-CSRFToken': getCookie('csrftoken') },
         success: function(data) {
             if (data.status === 'processing') {
-                checkVideoStatus(data.task_id);
+                checkMediaStatus(data.task_id);
             }
         },
         error: function(xhr) {
             $('#loading').addClass('hidden');
-            alert('Error: ' + xhr.responseJSON?.error || 'Something went wrong');
+            alert('Error: ' + (xhr.responseJSON?.error || 'Something went wrong'));
         }
     });
 });
 
-function checkVideoStatus(taskId) {
-    $.get('/check-video-status/' + taskId + '/', function(data) {
+function checkMediaStatus(taskId) {
+    $.get('/check-media-status/' + taskId + '/', function(data) {
         if (data.status === 'loading') {
-            setTimeout(() => checkVideoStatus(taskId), 2000);
+            setTimeout(() => checkMediaStatus(taskId), 2000);
         } else if (data.status === 'ready') {
             $('#loading').addClass('hidden');
             currentDownloadId = data.download_id;
-            displayVideoInfo(data);
+            displayMediaInfo(data);
         } else if (data.status === 'error') {
             $('#loading').addClass('hidden');
             alert('Error: ' + data.error);
@@ -98,52 +170,175 @@ function checkVideoStatus(taskId) {
     });
 }
 
-function displayVideoInfo(data) {
-    $('#thumbnail').attr('src', data.thumbnail);
+function displayMediaInfo(data) {
+    $('#thumbnail').attr('src', data.thumbnail || 'https://via.placeholder.com/300x200?text=No+Thumbnail');
     $('#title').text(data.title);
-    $('#duration').text(data.duration);
+    $('#duration').text(data.duration || 'N/A');
+    $('#uploader').text(data.uploader || 'Unknown');
+    $('#platform').text(data.platform);
+    $('#platformIcon').html(platformIcons[data.platform.toLowerCase()] || '<i class="fas fa-video"></i>');
     
-    const formatsHtml = data.formats.map(fmt => `
-        <button onclick="startDownload('${fmt.format_id}')" 
-                class="bg-gray-200 hover:bg-blue-600 hover:text-white px-4 py-2 rounded-lg transition">
-            ${fmt.resolution} ${fmt.filesize ? '(' + fmt.filesize + ')' : ''}
-        </button>
-    `).join('');
+    // Show media type badge
+    let mediaTypeText = data.media_type === 'video' ? '🎬 Video' : (data.media_type === 'image' ? '🖼️ Image' : '📝 Post');
+    $('#mediaTypeBadge').text(mediaTypeText);
+    
+    // Show Instagram specific info
+    if (data.platform.toLowerCase() === 'instagram') {
+        $('#instagramInfo').removeClass('hidden');
+        $('#caption').text(data.caption || 'No caption');
+        $('#likeCount').text(data.like_count || 0);
+        $('#commentCount').text(data.comment_count || 0);
+    } else {
+        $('#instagramInfo').addClass('hidden');
+    }
+    
+    const formatsHtml = data.formats.map(fmt => {
+        let icon = fmt.media_type === 'video' ? '🎬' : (fmt.media_type === 'audio' ? '🎵' : '🖼️');
+        let sizeText = fmt.filesize !== 'Unknown' ? `(${fmt.filesize})` : '';
+        let buttonClass = fmt.media_type === 'video' ? 'bg-blue-600 hover:bg-blue-700' : 
+                         (fmt.media_type === 'audio' ? 'bg-green-600 hover:bg-green-700' : 'bg-purple-600 hover:bg-purple-700');
+        
+        return `
+            <button onclick="startDownload('${fmt.format_id}', '${fmt.media_type}')" 
+                    class="${buttonClass} text-white px-4 py-2 rounded-lg transition transform hover:scale-105">
+                ${icon} ${fmt.resolution} ${sizeText}
+            </button>
+        `;
+    }).join('');
     
     $('#formats').html(formatsHtml);
     $('#videoInfo').removeClass('hidden');
 }
 
-function startDownload(formatId) {
+// Update the startDownload function
+function startDownload(formatId, mediaType) {
     $('#downloadProgress').removeClass('hidden');
+    $('#progressBar').css('width', '0%');
+    $('#downloadStatus').text('Starting download...');
     
     $.ajax({
         url: '/start-download/',
         method: 'POST',
-        data: { download_id: currentDownloadId, format_id: formatId },
+        data: { 
+            download_id: currentDownloadId, 
+            format_id: String(formatId)  // Ensure format_id is string
+        },
         headers: { 'X-CSRFToken': getCookie('csrftoken') },
         success: function(data) {
             if (data.status === 'downloading') {
                 checkDownloadStatus(data.task_id);
+            } else if (data.status === 'error') {
+                $('#downloadStatus').html(`
+                    <i class="fas fa-exclamation-triangle text-red-600 mr-2"></i>
+                    Error: ${data.error}
+                `);
+                setTimeout(() => $('#downloadProgress').addClass('hidden'), 5000);
             }
         },
-        error: function() {
-            alert('Download failed to start');
+        error: function(xhr) {
+            let errorMsg = 'Download failed to start';
+            if (xhr.responseJSON && xhr.responseJSON.error) {
+                errorMsg = xhr.responseJSON.error;
+            }
+            $('#downloadStatus').html(`
+                <i class="fas fa-exclamation-triangle text-red-600 mr-2"></i>
+                ${errorMsg}
+            `);
+            setTimeout(() => $('#downloadProgress').addClass('hidden'), 5000);
         }
     });
 }
 
+// Update the checkDownloadStatus function
 function checkDownloadStatus(taskId) {
     $.get('/check-download-status/' + taskId + '/', function(data) {
         if (data.status === 'downloading') {
-            $('#progressBar').css('width', '50%');
-            $('#downloadStatus').text('Downloading...');
+            // Update progress bar
+            let progress = data.progress || 0;
+            $('#progressBar').css('width', progress + '%');
+            $('#downloadStatus').text(data.message || 'Downloading... ' + progress + '%');
             setTimeout(() => checkDownloadStatus(taskId), 2000);
-        } else if (data.status === 'completed') {
+        } else if (data.status === 'ready') {
             $('#progressBar').css('width', '100%');
-            $('#downloadStatus').html(`Download complete! <a href="${data.file_url}" class="text-blue-600 underline">Click here to save</a>`);
+            $('#downloadStatus').html(`
+                <i class="fas fa-check-circle text-green-600 mr-2"></i>
+                Download complete! Starting download...
+            `);
+            
+            // Auto-trigger download
+            triggerDownload(data.download_url, data.filename);
+            
+            // Reset UI after 3 seconds
+            setTimeout(() => {
+                $('#downloadProgress').fadeOut();
+                $('#videoInfo').addClass('hidden');
+                $('#mediaUrl').val('');
+                $('#progressBar').css('width', '0%');
+            }, 3000);
         } else if (data.status === 'failed') {
-            $('#downloadStatus').text('Download failed: ' + (data.error || 'Unknown error'));
+            $('#downloadStatus').html(`
+                <i class="fas fa-exclamation-triangle text-red-600 mr-2"></i>
+                Download failed: ${data.error}
+            `);
+            setTimeout(() => $('#downloadProgress').addClass('hidden'), 5000);
+        } else if (data.status === 'error') {
+            $('#downloadStatus').html(`
+                <i class="fas fa-exclamation-triangle text-red-600 mr-2"></i>
+                Error: ${data.error}
+            `);
+            setTimeout(() => $('#downloadProgress').addClass('hidden'), 5000);
+        }
+    });
+}
+
+// Add trigger download function
+function triggerDownload(downloadUrl, filename) {
+    // Create a temporary anchor element
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+// Update startDownload function
+function startDownload(formatId, mediaType) {
+    // Show progress indicator
+    $('#downloadProgress').removeClass('hidden');
+    $('#progressBar').css('width', '0%');
+    $('#downloadStatus').html('<i class="fas fa-spinner fa-pulse mr-2"></i> Starting download...');
+    
+    $.ajax({
+        url: '/start-download/',
+        method: 'POST',
+        data: { 
+            download_id: currentDownloadId, 
+            format_id: String(formatId)
+        },
+        headers: { 'X-CSRFToken': getCookie('csrftoken') },
+        success: function(data) {
+            if (data.status === 'downloading') {
+                // Start polling for status
+                checkDownloadStatus(data.task_id);
+            } else if (data.status === 'error') {
+                $('#downloadStatus').html(`
+                    <i class="fas fa-exclamation-triangle text-red-600 mr-2"></i>
+                    Error: ${data.error}
+                `);
+                setTimeout(() => $('#downloadProgress').addClass('hidden'), 5000);
+            }
+        },
+        error: function(xhr) {
+            let errorMsg = 'Download failed to start';
+            if (xhr.responseJSON && xhr.responseJSON.error) {
+                errorMsg = xhr.responseJSON.error;
+            }
+            $('#downloadStatus').html(`
+                <i class="fas fa-exclamation-triangle text-red-600 mr-2"></i>
+                ${errorMsg}
+            `);
+            setTimeout(() => $('#downloadProgress').addClass('hidden'), 5000);
         }
     });
 }
