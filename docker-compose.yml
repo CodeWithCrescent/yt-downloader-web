@@ -1,0 +1,43 @@
+# version: '3.8'
+
+services:
+  web:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8900:8000"
+    depends_on:
+      - redis
+      - db
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+  
+  worker:
+    build: .
+    command: celery -A video_downloader worker --loglevel=info
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+      - db
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+  
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+  
+  db:
+    image: postgres:13
+    environment:
+      - POSTGRES_DB=media_downloader
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
