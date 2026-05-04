@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 import os
 from pathlib import Path
+from dotenv import load_dotenv
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -132,7 +134,25 @@ CELERY_TASK_SERIALIZER = 'json'
 
 # Temporary downloads directory
 DOWNLOAD_TEMP_DIR = os.path.join(BASE_DIR, 'temp_downloads')
+os.makedirs(MEDIA_ROOT, exist_ok=True)
 os.makedirs(DOWNLOAD_TEMP_DIR, exist_ok=True)
 
 # Session settings
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+# SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+SESSION_CACHE_ALIAS = 'default'
+
+# Instagram settings
+INSTAGRAM_USERNAME = os.getenv('INSTAGRAM_USERNAME', '')
+INSTAGRAM_PASSWORD = os.getenv('INSTAGRAM_PASSWORD', '')
+
+# Cache configuration (using Redis)
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://127.0.0.1:6379/1',
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        }
+    }
+}
