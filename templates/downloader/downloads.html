@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block title %}My Downloads{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4">
+    <div class="bg-white rounded-lg shadow-lg p-6">
+        <h1 class="text-2xl font-bold text-gray-800 mb-6">My Downloads</h1>
+        
+        {% if page_obj %}
+            <div class="space-y-4">
+                {% for download in page_obj %}
+                    <div class="border rounded-lg p-4 hover:shadow-md transition">
+                        <div class="flex items-center gap-4">
+                            {% if download.video_thumbnail %}
+                                <img src="{{ download.video_thumbnail }}" alt="Thumbnail" class="w-32 rounded">
+                            {% endif %}
+                            <div class="flex-1">
+                                <h3 class="font-bold text-lg">{{ download.video_title|default:"Unknown" }}</h3>
+                                <p class="text-sm text-gray-600">Duration: {{ download.video_duration }}</p>
+                                <p class="text-sm text-gray-600">Size: {{ download.file_size }}</p>
+                                <p class="text-sm text-gray-600">Downloaded: {{ download.created_at|date:"F j, Y, g:i a" }}</p>
+                                <p class="text-sm mt-1">
+                                    Status: 
+                                    <span class="px-2 py-1 rounded text-xs
+                                        {% if download.status == 'completed' %}bg-green-100 text-green-800
+                                        {% elif download.status == 'processing' %}bg-yellow-100 text-yellow-800
+                                        {% elif download.status == 'failed' %}bg-red-100 text-red-800
+                                        {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                        {{ download.get_status_display }}
+                                    </span>
+                                </p>
+                            </div>
+                            {% if download.status == 'completed' and download.file_path %}
+                                <a href="{% url 'download_file' download.id %}" 
+                                   class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+                                    Download
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Pagination -->
+            <div class="mt-6 flex justify-center">
+                <div class="flex space-x-2">
+                    {% if page_obj.has_previous %}
+                        <a href="?page=1" class="px-3 py-1 border rounded hover:bg-gray-100">&laquo; First</a>
+                        <a href="?page={{ page_obj.previous_page_number }}" class="px-3 py-1 border rounded hover:bg-gray-100">Previous</a>
+                    {% endif %}
+                    
+                    <span class="px-3 py-1">
+                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                    </span>
+                    
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}" class="px-3 py-1 border rounded hover:bg-gray-100">Next</a>
+                        <a href="?page={{ page_obj.paginator.num_pages }}" class="px-3 py-1 border rounded hover:bg-gray-100">Last &raquo;</a>
+                    {% endif %}
+                </div>
+            </div>
+        {% else %}
+            <div class="text-center py-12">
+                <p class="text-gray-500 text-lg">No downloads yet.</p>
+                <a href="{% url 'home' %}" class="inline-block mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
+                    Start Downloading
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
