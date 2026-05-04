@@ -1,8 +1,28 @@
 from django.db import models
 from django.contrib.auth.models import User
-from django.utils import timezone
 
-class VideoDownload(models.Model):
+class MediaDownload(models.Model):
+    PLATFORM_CHOICES = [
+        ('youtube', 'YouTube'),
+        ('instagram', 'Instagram'),
+        ('facebook', 'Facebook'),
+        ('tiktok', 'TikTok'),
+        ('pinterest', 'Pinterest'),
+        ('twitter', 'Twitter/X'),
+        ('reddit', 'Reddit'),
+        ('vimeo', 'Vimeo'),
+        ('dailymotion', 'Dailymotion'),
+        ('twitch', 'Twitch'),
+        ('other', 'Other'),
+    ]
+    
+    MEDIA_TYPE_CHOICES = [
+        ('video', 'Video'),
+        ('image', 'Image'),
+        ('audio', 'Audio'),
+        ('post', 'Post'),
+    ]
+    
     STATUS_CHOICES = [
         ('pending', 'Pending'),
         ('processing', 'Processing'),
@@ -11,33 +31,36 @@ class VideoDownload(models.Model):
     ]
     
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
-    video_url = models.URLField(max_length=500)
-    video_title = models.CharField(max_length=500, blank=True)
-    video_thumbnail = models.URLField(blank=True)
-    video_duration = models.CharField(max_length=20, blank=True)
-    file_path = models.CharField(max_length=500, blank=True)
-    file_size = models.CharField(max_length=50, blank=True)
+    media_url = models.URLField(max_length=500)
+    platform = models.CharField(max_length=20, choices=PLATFORM_CHOICES)
+    media_type = models.CharField(max_length=10, choices=MEDIA_TYPE_CHOICES)
+    title = models.CharField(max_length=500, blank=True)
+    thumbnail = models.URLField(blank=True)
+    duration = models.CharField(max_length=20, blank=True)
+    uploader = models.CharField(max_length=200, blank=True)
+    file_size = models.CharField(max_length=50, blank=True)  # Just store size, not file
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     created_at = models.DateTimeField(auto_now_add=True)
     completed_at = models.DateTimeField(null=True, blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
     
     class Meta:
         ordering = ['-created_at']
     
     def __str__(self):
-        return f"{self.video_title or self.video_url} - {self.status}"
+        return f"{self.title or self.media_url} - {self.platform} - {self.status}"
 
-class VideoFormat(models.Model):
-    download_instance = models.ForeignKey(VideoDownload, on_delete=models.CASCADE, related_name='formats')
+class MediaFormat(models.Model):
+    download_instance = models.ForeignKey(MediaDownload, on_delete=models.CASCADE, related_name='formats')
     resolution = models.CharField(max_length=20)
     format_id = models.CharField(max_length=50)
     filesize = models.CharField(max_length=50, blank=True)
     extension = models.CharField(max_length=10)
-    download_url = models.URLField(blank=True)
+    media_type = models.CharField(max_length=10, choices=MediaDownload.MEDIA_TYPE_CHOICES, default='video')
     
     class Meta:
         ordering = ['-resolution']
     
     def __str__(self):
-        return f"{self.resolution} - {self.download_instance.video_title}"
+        return f"{self.resolution} - {self.download_instance.title}"
     
