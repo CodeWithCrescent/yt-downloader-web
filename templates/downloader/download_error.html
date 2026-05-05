@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %}Download unavailable — GenDown{% endblock %}
+
+{% block extra_css %}
+        .err-card {
+            max-width: 24rem;
+            margin: 0 auto;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            padding: 2rem 1.5rem;
+            text-align: center;
+        }
+        .err-card h1 {
+            font-family: "Fraunces", Georgia, serif;
+            font-size: 1.25rem;
+            margin: 0 0 0.75rem;
+        }
+        .err-card p { color: var(--muted); font-size: 0.95rem; margin: 0 0 1.25rem; }
+        .btn-home {
+            display: inline-block;
+            padding: 0.65rem 1.25rem;
+            background: var(--accent);
+            color: #fff !important;
+            text-decoration: none;
+            font-weight: 600;
+            border-radius: 8px;
+        }
+{% endblock %}
+
+{% block content %}
+<div class="wrap">
+    <div class="err-card">
+        <h1>That link is no longer valid</h1>
+        <p>{{ error|default:"Files are removed shortly after delivery. Run the downloader again with the same URL." }}</p>
+        <a class="btn-home" href="{% url 'home' %}">Start over</a>
+    </div>
+</div>
+{% endblock %}
