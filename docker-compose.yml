@@ -103,7 +103,7 @@ services:
       context: .
     container_name: ytdownloader_beat
     restart: unless-stopped
-    command: celery -A core beat --loglevel=info
+    command: celery -A core beat --loglevel=info --schedule=/tmp/celerybeat-schedule
     env_file:
       - .env
     environment:
