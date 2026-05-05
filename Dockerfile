@@ -16,6 +16,6 @@ RUN pip install --upgrade pip && pip install -r /app/requirements.txt
 
 COPY . /app
 
-RUN mkdir -p /app/static /app/media /app/temp_downloads
+RUN mkdir -p /app/static /app/staticfiles /app/media /app/temp_downloads
 
 EXPOSE 9000
