@@ -25,5 +25,23 @@ nano /etc/systemd/system/ytdownloader-gunicorn.service
 
 gunicorn core.wsgi:application --bind 127.0.0.1:9000 --workers 3 --timeout 120
 
+systemctl daemon-reload
+systemctl enable --now ytdownloader-gunicorn
+systemctl status ytdownloader-gunicorn
+
+systemctl daemon-reload
+systemctl enable --now ytdownloader-worker ytdownloader-beat
+systemctl status ytdownloader-worker ytdownloader-beat
+
+
+systemctl restart ytdownloader-worker ytdownloader-beat ytdownloader-gunicorn
+systemctl status ytdownloader-worker ytdownloader-beat ytdownloader-gunicorn
+
+
+# === RESTART APP
+sudo systemctl restart ytdownloader-gunicorn
+
+sudo systemctl restart ytdownloader-worker ytdownloader-beat
+
 # ==TODO ==
 - [ ] Add country detection (https://country.is/)
