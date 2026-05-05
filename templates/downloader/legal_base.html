@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block extra_css %}
+        .legal-page {
+            max-width: 42rem;
+            margin: 0 auto;
+            padding: 0 0 2rem;
+        }
+        .legal-page h1 {
+            font-family: "Fraunces", Georgia, serif;
+            font-weight: 600;
+            font-size: clamp(1.5rem, 3.5vw, 2rem);
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+            margin: 0 0 0.5rem;
+            color: var(--ink);
+        }
+        .legal-page .legal-updated {
+            font-size: 0.88rem;
+            color: var(--muted);
+            margin: 0 0 1.5rem;
+        }
+        .legal-page h2 {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--ink);
+            margin: 1.75rem 0 0.65rem;
+        }
+        .legal-page p, .legal-page li {
+            font-size: 0.95rem;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+        .legal-page p { margin: 0 0 0.85rem; }
+        .legal-page ul, .legal-page ol {
+            margin: 0 0 1rem;
+            padding-left: 1.25rem;
+        }
+        .legal-page li { margin-bottom: 0.35rem; }
+        .legal-page .legal-lead {
+            font-size: 0.98rem;
+            color: var(--ink);
+            margin-bottom: 1.25rem;
+        }
+        .legal-page a.back {
+            display: inline-block;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 1.25rem;
+            text-decoration: none;
+        }
+        .legal-page a.back:hover { text-decoration: underline; }
+        .legal-page .contact-box {
+            margin-top: 2rem;
+            padding: 1rem 1.15rem;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            font-size: 0.92rem;
+            color: var(--muted);
+        }
+        .legal-page .contact-box strong { color: var(--ink); }
+{% endblock %}
+
+{% block content %}
+<article class="legal-page wrap">
+    {% block legal_body %}{% endblock %}
+</article>
+{% endblock %}
