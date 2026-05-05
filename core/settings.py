@@ -30,7 +30,7 @@ SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-change-me-in-production")
 DEBUG = os.getenv("DEBUG", "False")
 
 ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "*").split(",") if h.strip()]
-CSRF_TRUSTED_ORIGINS = ["yt-downloader.csambila.com"]
+CSRF_TRUSTED_ORIGINS = ["https://yt-downloader.csambila.com", "https://pagead2.googlesyndication.com"]
 CORS_ALLOWED_ORIGINS = [
     "https://yt-downloader.csambila.com",
     "https://pagead2.googlesyndication.com"
