@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block title %}Your download — GenDown{% endblock %}
+{% block meta_description %}Download your file while the link is valid.{% endblock %}
+
+{% block extra_css %}
+        .dl-card {
+            max-width: 26rem;
+            margin: 0 auto;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            padding: 2rem 1.5rem;
+            text-align: center;
+        }
+        .dl-card h1 {
+            font-family: "Fraunces", Georgia, serif;
+            font-size: 1.35rem;
+            margin: 0 0 0.5rem;
+        }
+        .dl-card p { color: var(--muted); margin: 0 0 1rem; font-size: 0.95rem; }
+        .file-name {
+            font-size: 0.9rem;
+            word-break: break-word;
+            padding: 0.65rem 0.85rem;
+            background: var(--bg);
+            border-radius: 8px;
+            border: 1px solid var(--line);
+            margin-bottom: 1.25rem;
+        }
+        .btn-dl {
+            display: inline-block;
+            padding: 0.65rem 1.25rem;
+            background: var(--accent);
+            color: #fff !important;
+            text-decoration: none;
+            font-weight: 600;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .btn-dl:hover { background: var(--accent-hover); }
+{% endblock %}
+
+{% block content %}
+<div class="wrap">
+    <div class="dl-card">
+        <h1>Your file is ready</h1>
+        <p>Tap the button and your browser will download it. You can tap again if the first try failed—the link stays valid for a few minutes.</p>
+
+        {% if thumbnail %}
+        <p style="margin: 0 0 1rem;">
+            <img src="{{ thumbnail }}" alt="" width="200" height="120" style="object-fit: cover; border-radius: 8px; border: 1px solid var(--line);">
+        </p>
+        {% endif %}
+
+        <div class="file-name">{{ filename|default:"download" }}</div>
+
+        <a id="save-link" class="btn-dl" href="{% url 'download_completed_file_short' delivery_token %}">Download file</a>
+
+        <p style="font-size: 0.8rem; color: var(--muted); margin: 1rem 0 0; line-height: 1.45;">
+            After a short time the file is removed from our server. If this page says expired, go home and run the same link again.
+        </p>
+
+        <p class="back" style="margin-top: 1.5rem; font-size: 0.9rem;"><a href="{% url 'home' %}">← Another video</a></p>
+    </div>
+</div>
+{% endblock %}
