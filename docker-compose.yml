@@ -55,7 +55,8 @@ services:
       - "traefik.http.middlewares.ytdownloader-sec.headers.browserXssFilter=true"
       - "traefik.http.middlewares.ytdownloader-sec.headers.contentTypeNosniff=true"
       - "traefik.http.middlewares.ytdownloader-sec.headers.frameDeny=true"
-      - "traefik.http.middlewares.ytdownloader-sec.headers.referrerPolicy=no-referrer"
+      # no-referrer strips Referer and breaks Django CSRF when Origin is null; keep same-origin referrers
+      - "traefik.http.middlewares.ytdownloader-sec.headers.referrerPolicy=strict-origin-when-cross-origin"
       - "traefik.http.middlewares.ytdownloader-sec.headers.stsSeconds=63072000"
       - "traefik.http.middlewares.ytdownloader-sec.headers.stsIncludeSubdomains=true"
       - "traefik.http.middlewares.ytdownloader-sec.headers.stsPreload=true"
