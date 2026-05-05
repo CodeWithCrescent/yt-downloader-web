@@ -13,6 +13,13 @@ from .delivery import run_purge_expired_deliveries
 logger = logging.getLogger(__name__)
 
 
+def _fit(value, max_len, default=""):
+    s = (value or default or "")
+    if not isinstance(s, str):
+        s = str(s)
+    return s[:max_len]
+
+
 @shared_task
 def purge_expired_delivery_files():
     return run_purge_expired_deliveries()
@@ -132,17 +139,22 @@ def get_media_info_task(self, media_url, user_id=None):
 
         user = User.objects.get(id=user_id) if user_id else None
 
-        title = info.get("title", "Untitled")[:500]
+        title = _fit(info.get("title"), 500, "Untitled")
+        thumbnail = _fit(info.get("thumbnail"), 2048, "")
+        duration = _fit(info.get("duration"), 20, "")
+        uploader = _fit(info.get("uploader"), 200, "")
+        platform = _fit(info.get("platform"), 20, "other")
+        media_type = _fit(info.get("media_type"), 10, "video")
 
         download_obj = MediaDownload.objects.create(
             user=user,
             media_url=clean_url,
-            platform=info["platform"],
-            media_type=info["media_type"],
+            platform=platform,
+            media_type=media_type,
             title=title,
-            thumbnail=info.get("thumbnail") or "",
-            duration=info.get("duration") or "",
-            uploader=info.get("uploader") or "",
+            thumbnail=thumbnail,
+            duration=duration,
+            uploader=uploader,
             user_agent="",
             status="pending",
             metadata={
@@ -157,11 +169,11 @@ def get_media_info_task(self, media_url, user_id=None):
         for fmt in info["formats"]:
             MediaFormat.objects.create(
                 download_instance=download_obj,
-                resolution=fmt.get("resolution", "Unknown"),
-                format_id=str(fmt.get("format_id", "best")),
-                filesize=fmt.get("filesize", "Unknown"),
-                extension=fmt.get("extension", "mp4"),
-                media_type=fmt.get("type", info["media_type"]),
+                resolution=_fit(fmt.get("resolution"), 20, "Unknown"),
+                format_id=_fit(fmt.get("format_id"), 50, "best"),
+                filesize=_fit(fmt.get("filesize"), 50, "Unknown"),
+                extension=_fit(fmt.get("extension"), 10, "mp4"),
+                media_type=_fit(fmt.get("type"), 10, media_type),
             )
 
         logger.info("Media info saved with ID: %s", download_obj.id)
