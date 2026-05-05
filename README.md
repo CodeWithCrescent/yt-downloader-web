@@ -14,3 +14,9 @@ python manage.py runserver
 ## Optional: Install FFmpeg for better format support
 
 sudo apt-get install ffmpeg
+
+
+
+
+# ==TODO ==
+- [ ] Add country detection (https://country.is/)
