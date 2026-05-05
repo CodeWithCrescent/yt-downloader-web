@@ -3,33 +3,177 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Video Downloader{% endblock %}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <meta name="description" content="{% block meta_description %}Download videos from YouTube, TikTok, Instagram, Facebook, X, and more. Paste a link, pick quality. No account.{% endblock %}">
+    <meta name="robots" content="index, follow">
+    <meta property="og:title" content="{% block og_title %}GenDown — online video downloader{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}Paste a link, choose quality, get your file. Works in the browser.{% endblock %}">
+    <meta property="og:type" content="website">
+    <link rel="canonical" href="{% block canonical_url %}{{ request.build_absolute_uri }}{% endblock %}">
+    <title>{% block title %}GenDown — download videos from popular sites{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;1,9..40,400&family=Fraunces:opsz,wght@9..144,600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f3f1ec;
+            --surface: #fffcf7;
+            --ink: #1a1814;
+            --muted: #5c574e;
+            --line: #dad5cb;
+            --accent: #b83226;
+            --accent-hover: #94281f;
+            --radius: 10px;
+        }
+        *, *::before, *::after { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: "DM Sans", system-ui, sans-serif;
+            font-size: 1rem;
+            line-height: 1.55;
+            color: var(--ink);
+            background: var(--bg);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        a { color: var(--accent); text-underline-offset: 3px; }
+        a:hover { color: var(--accent-hover); }
+        .wrap {
+            width: 100%;
+            max-width: 68rem;
+            margin: 0 auto;
+            padding: 0 1.25rem;
+        }
+        header.site-header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--line);
+        }
+        .header-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.85rem 0;
+        }
+        .logo {
+            font-family: "Fraunces", Georgia, serif;
+            font-weight: 600;
+            font-size: 1.35rem;
+            letter-spacing: -0.02em;
+            color: var(--ink);
+            text-decoration: none;
+        }
+        .logo:hover { color: var(--accent); }
+        main { flex: 1; padding: 2rem 0 3rem; }
+        footer.site-footer {
+            background: var(--surface);
+            border-top: 1px solid var(--line);
+            padding: 2.5rem 0;
+            margin-top: auto;
+            font-size: 0.9rem;
+            color: var(--muted);
+        }
+        .footer-grid {
+            display: grid;
+            gap: 2rem;
+        }
+        @media (min-width: 640px) {
+            .footer-grid { grid-template-columns: 2fr 1fr 1fr; }
+        }
+        @media (min-width: 900px) {
+            .footer-grid { grid-template-columns: 2fr 1fr 1fr 1fr; }
+        }
+        .footer-links {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        .footer-links li { margin-bottom: 0.35rem; }
+        .footer-links a {
+            color: var(--muted);
+            text-decoration: none;
+        }
+        .footer-links a:hover { color: var(--accent); text-decoration: underline; }
+        .footer-note {
+            grid-column: 1 / -1;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--line);
+            text-align: center;
+            font-size: 0.85rem;
+        }
+        .ad-slot {
+            min-height: 90px;
+            margin: 1.5rem 0;
+            background: linear-gradient(180deg, #ebe8e2 0%, #e4e0d8 100%);
+            border: 1px dashed var(--line);
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--muted);
+            font-size: 0.8rem;
+        }
+        {% block extra_css %}{% endblock %}
+    </style>
+    {% block extra_head %}{% endblock %}
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "GenDown",
+        "applicationCategory": "UtilitiesApplication",
+        "operatingSystem": "Web",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+        "description": "Download videos and media from YouTube, TikTok, Instagram, Facebook, and more. Paste a URL, choose quality, no registration."
+    }
+    </script>
 </head>
-<body class="bg-gray-100">
-    <nav class="bg-white shadow-lg">
-        <div class="max-w-7xl mx-auto px-4">
-            <div class="flex justify-between items-center py-4">
-                <div class="text-xl font-bold text-blue-600">
-                    <a href="{% url 'home' %}">Video Downloader</a>
-                </div>
-                <div class="space-x-4">
-                    {% if user.is_authenticated %}
-                        <a href="{% url 'my_downloads' %}" class="text-gray-700 hover:text-blue-600">My Downloads</a>
-                        <a href="{% url 'admin:logout' %}" class="text-gray-700 hover:text-blue-600">Logout</a>
-                    {% else %}
-                        <a href="{% url 'admin:login' %}" class="text-gray-700 hover:text-blue-600">Login</a>
-                    {% endif %}
-                </div>
-            </div>
+<body>
+    <header class="site-header">
+        <div class="wrap header-inner">
+            <a class="logo" href="{% url 'home' %}">GenDown</a>
         </div>
-    </nav>
-    
-    <main class="py-8">
+    </header>
+
+    <main>
         {% block content %}{% endblock %}
     </main>
-    
+
+    <footer class="site-footer">
+        <div class="wrap footer-grid">
+            <div>
+                <p style="margin: 0 0 0.5rem; font-weight: 600; color: var(--ink);">About</p>
+                <p style="margin: 0;">Free tool to fetch publicly available media for offline use. Usage must follow each platform’s terms and copyright law.</p>
+            </div>
+            <div>
+                <p style="margin: 0 0 0.5rem; font-weight: 600; color: var(--ink);">Supported sites</p>
+                <ul class="footer-links">
+                    <li><a href="{% url 'home' %}#how">YouTube, Instagram, TikTok</a></li>
+                    <li><a href="{% url 'home' %}#how">Facebook, X, Reddit</a></li>
+                    <li><a href="{% url 'home' %}#how">Vimeo, Twitch, Pinterest</a></li>
+                </ul>
+            </div>
+            <div>
+                <p style="margin: 0 0 0.5rem; font-weight: 600; color: var(--ink);">On this page</p>
+                <ul class="footer-links">
+                    <li><a href="{% url 'home' %}#tool">Downloader</a></li>
+                    <li><a href="{% url 'home' %}#how">How it works</a></li>
+                    <li><a href="{% url 'home' %}#faq">FAQ</a></li>
+                    <li><a href="{% url 'home' %}#share">Share</a></li>
+                    <li><a href="{% url 'home' %}#legal">Terms &amp; notes</a></li>
+                </ul>
+            </div>
+            <div>
+                <p style="margin: 0 0 0.5rem; font-weight: 600; color: var(--ink);">Legal &amp; contact</p>
+                <ul class="footer-links">
+                    <li><a href="{% url 'terms' %}">Terms of Service</a></li>
+                    <li><a href="{% url 'privacy' %}">Privacy Policy</a></li>
+                    <li><a href="mailto:info@gendownloader.com?subject=General%20-%20GenDown%20inquiry">info@gendownloader.com</a></li>
+                </ul>
+            </div>
+            <p class="footer-note">&copy; {% now "Y" %} GenDown. Not affiliated with YouTube, Meta, ByteDance, or other platforms. <a href="{% url 'terms' %}">Terms</a> &middot; <a href="{% url 'privacy' %}">Privacy</a></p>
+        </div>
+    </footer>
+
     {% block scripts %}{% endblock %}
 </body>
 </html>
