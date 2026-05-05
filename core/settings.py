@@ -30,7 +30,11 @@ SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-change-me-in-production")
 DEBUG = os.getenv("DEBUG", "False")
 
 ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "*").split(",") if h.strip()]
-CSRF_TRUSTED_ORIGINS = [h.strip() for h in os.getenv("CSRF_TRUSTED_ORIGINS", "*").split(",") if h.strip()]
+CSRF_TRUSTED_ORIGINS = ["yt-downloader.csambila.com"]
+CORS_ALLOWED_ORIGINS = [
+    "https://yt-downloader.csambila.com",
+    "https://pagead2.googlesyndication.com"
+]
 
 # HTTPS behind Traefik / nginx: Gunicorn sees HTTP; trust proxy headers so request.is_secure()
 # and CSRF/session cookies match the browser URL (fixes admin login 403 CSRF on production).
@@ -54,10 +58,12 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "corsheaders",
     "downloader",
 ]
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "downloader.middleware.VisitTrackingMiddleware",
