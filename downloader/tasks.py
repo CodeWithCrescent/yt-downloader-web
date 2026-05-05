@@ -1,171 +1,178 @@
+import os
+import re
+import uuid
+import logging
+
 from celery import shared_task
 from django.utils import timezone
+
 from .models import MediaDownload, MediaFormat
 from .media_downloader import MediaDownloader
-from django.core.cache import cache
-import os
-import tempfile
-import logging
+from .delivery import run_purge_expired_deliveries
 
 logger = logging.getLogger(__name__)
 
+
+@shared_task
+def purge_expired_delivery_files():
+    return run_purge_expired_deliveries()
+
+
 @shared_task(bind=True, max_retries=3)
 def process_media_download(self, download_id, format_id):
-    """Process media download and return download URL (without saving permanently)"""
     try:
-        logger.info(f"Starting download process for ID: {download_id}")
+        logger.info("Starting download process for ID: %s", download_id)
         download_obj = MediaDownload.objects.get(id=download_id)
-        download_obj.status = 'processing'
+
+        # Remove any previous packaged file for this job (e.g. user changed format)
+        if download_obj.temp_file_path:
+            old = (download_obj.temp_file_path or "").strip()
+            if old and os.path.isfile(old):
+                try:
+                    os.remove(old)
+                except OSError:
+                    pass
+        MediaDownload.objects.filter(pk=download_obj.pk).update(
+            temp_file_path="",
+            delivery_filename="",
+            delivery_token=None,
+            file_ready_at=None,
+        )
+        download_obj.refresh_from_db()
+
+        download_obj.status = "processing"
         download_obj.save()
-        
+
         downloader = MediaDownloader()
-        
-        # Create temporary file for download
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tmp_file:
-            temp_path = tmp_file.name
-        
-        # Download the media to temporary file
         file_path, file_size, error = downloader.download_media(
             download_obj.media_url,
             format_id,
             download_obj.title,
             download_obj.media_type,
-            temp_path  # Pass temporary file path
         )
 
-        # Store file info in cache for retrieval (expires after 1 hour)
-        cache_key = f'download_file_{download_id}'
-        cache.set(cache_key, {
-            'file_path': file_path,
-            'filename': f"{download_obj.title[:100]}.mp4",
-            'file_size': file_size
-        }, timeout=3600)  # 1 hour expiry
-        
         if error:
-            download_obj.status = 'failed'
+            download_obj.status = "failed"
             download_obj.save()
-            logger.error(f"Download failed for ID {download_id}: {error}")
-            # Clean up temp file
-            if os.path.exists(temp_path):
-                os.remove(temp_path)
-            return {'status': 'failed', 'error': error}
-        
-        # Update download record with file info (but don't save file permanently)
+            logger.error("Download failed for ID %s: %s", download_id, error)
+            if file_path and os.path.exists(file_path):
+                try:
+                    os.remove(file_path)
+                except OSError:
+                    pass
+            return {"status": "failed", "error": error}
+
+        if not file_path or not os.path.isfile(file_path) or os.path.getsize(file_path) < 1:
+            if file_path and os.path.exists(file_path):
+                try:
+                    os.remove(file_path)
+                except OSError:
+                    pass
+            download_obj.status = "failed"
+            download_obj.save()
+            return {"status": "failed", "error": "Download produced an empty file."}
+
+        ext = os.path.splitext(file_path)[1] or ".mp4"
+        raw_title = (download_obj.title or "download").strip() or "download"
+        safe_title = re.sub(r'[/\\?%*:|"<>]', "_", raw_title)[:180].strip() or "download"
+        display_name = f"{safe_title}{ext}"
+
+        token = uuid.uuid4()
+        download_obj.delivery_token = token
+        download_obj.temp_file_path = file_path
+        download_obj.delivery_filename = display_name
+        download_obj.file_ready_at = timezone.now()
         download_obj.file_size = file_size
-        download_obj.status = 'completed'
+        download_obj.status = "completed"
         download_obj.completed_at = timezone.now()
         download_obj.save()
-        
-        # Store temporary file path in task result (will be cleaned up after download)
+
         result = {
-            'status': 'completed',
-            'file_path': file_path,
-            'file_size': file_size,
-            'filename': f"{download_obj.title[:100]}.mp4",
-            'download_id': download_id
+            "status": "completed",
+            "file_size": file_size,
+            "filename": display_name,
+            "download_id": download_id,
+            "delivery_token": str(token),
         }
-        
-        logger.info(f"Download completed for ID {download_id}")
+        logger.info("Download completed for ID %s", download_id)
         return result
-        
+
     except Exception as e:
-        logger.error(f"Error in process_media_download for ID {download_id}: {str(e)}")
+        logger.error("Error in process_media_download for ID %s: %s", download_id, e)
         try:
             download_obj = MediaDownload.objects.get(id=download_id)
-            download_obj.status = 'failed'
+            download_obj.status = "failed"
             download_obj.save()
-        except:
+        except Exception:
             pass
-        
-        # Clean up temp file if exists
-        if 'temp_path' in locals() and os.path.exists(temp_path):
-            os.remove(temp_path)
-        
-        # Retry the task if it's a temporary error
         if self.request.retries < self.max_retries:
             raise self.retry(exc=e, countdown=60 * (self.request.retries + 1))
-        
-        return {'status': 'failed', 'error': str(e)}
+        return {"status": "failed", "error": str(e)}
 
 
 @shared_task(bind=True, max_retries=2)
 def get_media_info_task(self, media_url, user_id=None):
     """Get media information asynchronously"""
-    logger.info(f"Getting media info for URL: {media_url}")
+    logger.info("Getting media info for URL: %s", media_url)
     downloader = MediaDownloader()
-    
-    # Clean URL first
+
     clean_url = downloader.clean_url(media_url)
-    
-    # Validate URL
+
     if not downloader.validate_url(clean_url):
-        return {'status': 'error', 'error': 'Unsupported URL or platform'}
-    
+        return {"status": "error", "error": "Unsupported URL or platform"}
+
     try:
         info, error = downloader.extract_media_info(clean_url)
-        
+
         if error:
-            logger.error(f"Error extracting info: {error}")
-            return {'status': 'error', 'error': error}
-        
-        # Save to database
+            logger.error("Error extracting info: %s", error)
+            return {"status": "error", "error": error}
+
         from django.contrib.auth.models import User
+
         user = User.objects.get(id=user_id) if user_id else None
-        
-        # Ensure title is not too long
-        title = info.get('title', 'Untitled')[:500]
-        
+
+        title = info.get("title", "Untitled")[:500]
+
         download_obj = MediaDownload.objects.create(
             user=user,
             media_url=clean_url,
-            platform=info['platform'],
-            media_type=info['media_type'],
+            platform=info["platform"],
+            media_type=info["media_type"],
             title=title,
-            thumbnail=info.get('thumbnail', ''),
-            duration=info.get('duration', ''),
-            uploader=info.get('uploader', ''),
-            status='pending',
+            thumbnail=info.get("thumbnail") or "",
+            duration=info.get("duration") or "",
+            uploader=info.get("uploader") or "",
+            user_agent="",
+            status="pending",
             metadata={
-                'caption': info.get('caption', ''),
-                'like_count': info.get('like_count', 0),
-                'comment_count': info.get('comment_count', 0),
-                'has_multiple': info.get('has_multiple', False),
-                'description': info.get('description', ''),
-            }
+                "caption": info.get("caption", ""),
+                "like_count": info.get("like_count", 0),
+                "comment_count": info.get("comment_count", 0),
+                "has_multiple": info.get("has_multiple", False),
+                "description": info.get("description", ""),
+            },
         )
-        
-        # Save formats
-        for fmt in info['formats']:
+
+        for fmt in info["formats"]:
             MediaFormat.objects.create(
                 download_instance=download_obj,
-                resolution=fmt.get('resolution', 'Unknown'),
-                format_id=str(fmt.get('format_id', 'best')),
-                filesize=fmt.get('filesize', 'Unknown'),
-                extension=fmt.get('extension', 'mp4'),
-                media_type=fmt.get('type', info['media_type'])
+                resolution=fmt.get("resolution", "Unknown"),
+                format_id=str(fmt.get("format_id", "best")),
+                filesize=fmt.get("filesize", "Unknown"),
+                extension=fmt.get("extension", "mp4"),
+                media_type=fmt.get("type", info["media_type"]),
             )
-        
-        logger.info(f"Media info saved with ID: {download_obj.id}")
+
+        logger.info("Media info saved with ID: %s", download_obj.id)
         return {
-            'status': 'success',
-            'download_id': download_obj.id,
-            'info': info
+            "status": "success",
+            "download_id": download_obj.id,
+            "info": info,
         }
-        
+
     except Exception as e:
-        logger.error(f"Error in get_media_info_task: {str(e)}")
+        logger.error("Error in get_media_info_task: %s", e)
         if self.request.retries < self.max_retries:
             raise self.retry(exc=e, countdown=30)
-        return {'status': 'error', 'error': str(e)}
-
-
-@shared_task
-def cleanup_temp_file(file_path):
-    """Clean up temporary file after download"""
-    try:
-        if file_path and os.path.exists(file_path):
-            os.remove(file_path)
-            logger.info(f"Cleaned up temp file: {file_path}")
-    except Exception as e:
-        logger.error(f"Error cleaning up temp file: {str(e)}")
-
+        return {"status": "error", "error": str(e)}
