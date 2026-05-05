@@ -1,9 +1,10 @@
 import yt_dlp
-import instaloader
 import requests
 import os
 import re
 import json
+import uuid
+import glob
 from urllib.parse import urlparse, urlunparse, parse_qs, urlencode
 from django.conf import settings
 from bs4 import BeautifulSoup
@@ -78,9 +79,7 @@ class MediaDownloader:
         clean_url = self.clean_url(url)
         platform = self.detect_platform(clean_url)
         
-        if platform == 'instagram':
-            return self._extract_instagram_info(clean_url)
-        elif platform in ['youtube', 'vimeo', 'dailymotion', 'twitch', 'facebook', 'tiktok']:
+        if platform in ['youtube', 'instagram', 'vimeo', 'dailymotion', 'twitch', 'facebook', 'tiktok']:
             return self._extract_with_ytdlp(clean_url)
         elif platform == 'pinterest':
             return self._extract_pinterest_info(clean_url)
@@ -91,31 +90,67 @@ class MediaDownloader:
         else:
             return None, "Unsupported platform or URL"
     
+    def _ytdlp_network_opts(self):
+        """Anonymous requests only: realistic headers — no cookie files or logins."""
+        return {
+            'http_headers': {
+                'User-Agent': (
+                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
+                    '(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
+                ),
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.9',
+            },
+            'socket_timeout': 60,
+        }
+
+    def _flatten_ytdlp_info(self, info):
+        """Carousels / multi-entry posts: take first usable leaf."""
+        depth = 0
+        while info and depth < 12:
+            depth += 1
+            ents = info.get('entries')
+            if ents:
+                nxt = next((e for e in ents if e), None)
+                if not nxt:
+                    return None
+                info = nxt
+                continue
+            break
+        return info
+
     def _extract_with_ytdlp(self, url):
-        """Extract info using yt-dlp (supports many platforms)"""
+        """Extract info using yt-dlp (YouTube, Instagram, TikTok, Facebook, etc.)."""
         ydl_opts = {
             'quiet': True,
             'no_warnings': True,
             'extract_flat': False,
             'ignoreerrors': True,
         }
-        
+        ydl_opts.update(self._ytdlp_network_opts())
+
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=False)
-                
+
                 if not info:
                     return None, "Could not extract video information"
-                
-                # Check if it's a playlist
-                if 'entries' in info:
-                    # It's a playlist, get first video
-                    if info['entries']:
-                        info = info['entries'][0]
-                    else:
-                        return None, "No videos found in playlist"
-                
-                media_type = 'video' if info.get('duration', 0) > 0 else 'image'
+
+                info = self._flatten_ytdlp_info(info)
+                if not info:
+                    return None, "No media found in this link."
+
+                fmts = info.get('formats') or []
+                duration = info.get('duration') or 0
+                try:
+                    duration = int(duration)
+                except (TypeError, ValueError):
+                    duration = 0
+                has_video_track = any(
+                    (f.get('vcodec') not in (None, 'none'))
+                    for f in fmts
+                )
+                media_type = 'video' if (duration > 0 or has_video_track) else 'image'
                 
                 media_info = {
                     'title': info.get('title', 'Unknown'),
@@ -169,7 +204,7 @@ class MediaDownloader:
                         'resolution': 'Original',
                         'format_id': 'best',
                         'filesize': self._format_filesize(info.get('filesize', 0)),
-                        'extension': info.get('ext', 'mp4'),
+                        'extension': info.get('ext', 'jpg'),
                         'type': media_type
                     })
                 
@@ -193,84 +228,6 @@ class MediaDownloader:
                 
         except Exception as e:
             return None, str(e)
-    
-    def _extract_instagram_info(self, url):
-        """Extract Instagram posts (photos and videos)"""
-        try:
-            # Clean URL
-            clean_url = self.clean_url(url)
-            
-            # Use yt-dlp first (more reliable for Instagram)
-            ydl_opts = {
-                'quiet': True,
-                'no_warnings': True,
-            }
-            
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                info = ydl.extract_info(clean_url, download=False)
-                
-                if info:
-                    media_info = {
-                        'title': info.get('title', 'Instagram Post')[:100],
-                        'thumbnail': info.get('thumbnail', ''),
-                        'duration': self._format_duration(info.get('duration', 0)),
-                        'uploader': info.get('uploader', 'Unknown'),
-                        'platform': 'instagram',
-                        'media_type': 'video' if info.get('duration', 0) > 0 else 'image',
-                    }
-                    
-                    formats = []
-                    if info.get('duration', 0) > 0:
-                        # Video
-                        for f in info.get('formats', []):
-                            if f.get('vcodec') != 'none' and f.get('height'):
-                                formats.append({
-                                    'resolution': f'{f["height"]}p',
-                                    'format_id': str(f.get('format_id', 'best')),
-                                    'filesize': self._format_filesize(f.get('filesize', 0)),
-                                    'extension': f.get('ext', 'mp4'),
-                                    'type': 'video'
-                                })
-                        # Best quality
-                        formats.insert(0, {
-                            'resolution': 'Best Quality',
-                            'format_id': 'best',
-                            'filesize': 'Unknown',
-                            'extension': 'mp4',
-                            'type': 'video'
-                        })
-                    else:
-                        # Image
-                        formats.append({
-                            'resolution': 'Original',
-                            'format_id': 'best',
-                            'filesize': self._format_filesize(info.get('filesize', 0)),
-                            'extension': 'jpg',
-                            'type': 'image'
-                        })
-                    
-                    media_info['formats'] = formats
-                    return media_info, None
-                    
-        except Exception as e:
-            # Fallback to basic info
-            return {
-                'title': 'Instagram Media',
-                'thumbnail': '',
-                'duration': 'N/A',
-                'uploader': 'Instagram User',
-                'platform': 'instagram',
-                'media_type': 'video' if 'reel' in url else 'image',
-                'formats': [
-                    {
-                        'resolution': 'Best Quality',
-                        'format_id': 'best',
-                        'filesize': 'Unknown',
-                        'extension': 'mp4' if 'reel' in url else 'jpg',
-                        'type': 'video' if 'reel' in url else 'image'
-                    }
-                ]
-            }, None
     
     def _extract_pinterest_info(self, url):
         """Extract Pinterest pins (images and videos)"""
@@ -397,70 +354,84 @@ class MediaDownloader:
             return None, str(e)
     
     def download_media(self, url, format_id, title, media_type='video', temp_path=None):
-        """Download media directly to specified temp path"""
-        # Clean URL first
+        """Download media to DOWNLOAD_TEMP_DIR using a yt-dlp template (reliable path)."""
         clean_url = self.clean_url(url)
-        safe_title = re.sub(r'[^\w\-_\. ]', '_', title)[:200]
-        
-        # If no temp_path provided, create one
-        if not temp_path:
-            import tempfile
-            temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.mp4')
-            temp_path = temp_file.name
-            temp_file.close()
-        
-        platform = self.detect_platform(clean_url)
-        
-        # For all platforms, use yt-dlp with custom output
-        return self._download_with_ytdlp_to_path(clean_url, format_id, temp_path, media_type)
+        return self._download_with_ytdlp_to_path(clean_url, format_id, media_type)
 
-    def _download_with_ytdlp_to_path(self, url, format_id, output_path, media_type):
-        """Download using yt-dlp to specific path"""
-        
-        # Configure yt-dlp options
+    def _pick_ytdlp_output_file(self, out_base):
+        """After download, select the main output file next to out_base (no extension)."""
+        pattern = out_base + '.*'
+        found = []
+        for path in glob.glob(pattern):
+            pl = path.lower()
+            if pl.endswith('.part') or pl.endswith('.ytdl') or pl.endswith('.temp'):
+                continue
+            if not os.path.isfile(path):
+                continue
+            try:
+                sz = os.path.getsize(path)
+            except OSError:
+                continue
+            if sz < 1:
+                continue
+            found.append((sz, path))
+        if not found:
+            return None
+        found.sort(key=lambda x: x[0], reverse=True)
+        return found[0][1]
+
+    def _download_with_ytdlp_to_path(self, url, format_id, media_type):
+        """Download using yt-dlp with %(ext)s template so merges write a real file."""
+        uid = uuid.uuid4().hex[:24]
+        out_base = os.path.join(self.temp_dir, f'ytdl_{uid}')
+        outtmpl = out_base + '.%(ext)s'
+
         ydl_opts = {
-            'outtmpl': output_path,
+            'outtmpl': outtmpl,
             'quiet': True,
             'no_warnings': True,
-            'ignoreerrors': True,
-            'noplaylist': True,  # Don't download playlists
+            'ignoreerrors': False,
+            'noplaylist': True,
+            'retries': 3,
+            'fragment_retries': 3,
         }
-        
-        # Handle format selection
+        ydl_opts.update(self._ytdlp_network_opts())
+        if media_type == 'video':
+            ydl_opts['merge_output_format'] = 'mp4'
+
         if format_id == 'best':
-            ydl_opts['format'] = 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best'
+            ydl_opts['format'] = (
+                'bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best[ext=mp4]/best'
+            )
         elif format_id == 'bestaudio':
-            ydl_opts['format'] = 'bestaudio'
+            ydl_opts['format'] = 'bestaudio/best'
             ydl_opts['postprocessors'] = [{
                 'key': 'FFmpegExtractAudio',
                 'preferredcodec': 'mp3',
                 'preferredquality': '192',
             }]
-            # Change output path extension for audio
-            output_path = output_path.replace('.mp4', '.mp3')
-            ydl_opts['outtmpl'] = output_path
+            ydl_opts.pop('merge_output_format', None)
         else:
             ydl_opts['format'] = format_id
-        
+
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                # Download the video
                 ydl.download([url])
-                
-                # Check if file exists
-                if os.path.exists(output_path):
-                    file_size = os.path.getsize(output_path)
-                    return output_path, self._format_filesize(file_size), None
-                else:
-                    # Try to find file with different extension
-                    for ext in ['.mp4', '.webm', '.mkv', '.mp3']:
-                        test_path = output_path.rsplit('.', 1)[0] + ext
-                        if os.path.exists(test_path):
-                            file_size = os.path.getsize(test_path)
-                            return test_path, self._format_filesize(file_size), None
-                    
-                    return None, None, f"Download failed: File not created"
-                    
+
+            output_path = self._pick_ytdlp_output_file(out_base)
+            if not output_path:
+                return None, None, 'Download failed: no output file (or empty).'
+
+            file_size = os.path.getsize(output_path)
+            if file_size < 1:
+                try:
+                    os.remove(output_path)
+                except OSError:
+                    pass
+                return None, None, 'Download failed: empty file.'
+
+            return output_path, self._format_filesize(file_size), None
+
         except Exception as e:
             return None, None, str(e)
     
