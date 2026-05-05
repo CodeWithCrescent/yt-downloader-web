@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 import os
+from datetime import timedelta
 from pathlib import Path
 from dotenv import load_dotenv
 load_dotenv()
@@ -46,6 +47,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "downloader.middleware.VisitTrackingMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -132,19 +134,25 @@ CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 
-# Temporary downloads directory
+# Temporary downloads directory (yt-dlp writes here; cleaned up after DELIVERY_TTL_MINUTES)
 DOWNLOAD_TEMP_DIR = os.path.join(BASE_DIR, 'temp_downloads')
 os.makedirs(MEDIA_ROOT, exist_ok=True)
 os.makedirs(DOWNLOAD_TEMP_DIR, exist_ok=True)
+
+DELIVERY_TTL_MINUTES = int(os.getenv('DELIVERY_TTL_MINUTES', '5'))
+
+# Celery Beat: purge packaged files after DELIVERY_TTL_MINUTES (run celery beat separately)
+CELERY_BEAT_SCHEDULE = {
+    'purge-expired-deliveries': {
+        'task': 'downloader.tasks.purge_expired_delivery_files',
+        'schedule': timedelta(seconds=60),
+    },
+}
 
 # Session settings
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 # SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
 SESSION_CACHE_ALIAS = 'default'
-
-# Instagram settings
-INSTAGRAM_USERNAME = os.getenv('INSTAGRAM_USERNAME', '')
-INSTAGRAM_PASSWORD = os.getenv('INSTAGRAM_PASSWORD', '')
 
 # Cache configuration (using Redis)
 CACHES = {
