@@ -27,21 +27,17 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-change-me-in-production")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv("DEBUG", "False").lower() in ("1", "true", "yes", "on")
+DEBUG = os.getenv("DEBUG", "False")
 
 ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "*").split(",") if h.strip()]
+CSRF_TRUSTED_ORIGINS = [h.strip() for h in os.getenv("CSRF_TRUSTED_ORIGINS", "*").split(",") if h.strip()]
 
 # HTTPS behind Traefik / nginx: Gunicorn sees HTTP; trust proxy headers so request.is_secure()
 # and CSRF/session cookies match the browser URL (fixes admin login 403 CSRF on production).
-USE_TLS_PROXY = os.getenv("USE_TLS_PROXY", "False").lower() in ("1", "true", "yes", "on")
+USE_TLS_PROXY = os.getenv("USE_TLS_PROXY", "False")
 if USE_TLS_PROXY:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     USE_X_FORWARDED_HOST = True
-
-# Django 4+: required for POST from HTTPS origins (admin login) when using a public domain.
-# Example: CSRF_TRUSTED_ORIGINS=https://yt-downloader.example.com,https://www.example.com
-_csrf_origins = os.getenv("CSRF_TRUSTED_ORIGINS", "").strip()
-CSRF_TRUSTED_ORIGINS = [o.strip() for o in _csrf_origins.split(",") if o.strip()]
 
 if not DEBUG:
     SESSION_COOKIE_SECURE = True
