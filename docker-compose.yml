@@ -20,6 +20,8 @@ services:
       - CELERY_BROKER_URL=redis://uhuru_pos_redis:6379/0
       - CELERY_RESULT_BACKEND=redis://uhuru_pos_redis:6379/0
       - ALLOWED_HOSTS=yt-downloader.csambila.com
+      - USE_TLS_PROXY=True
+      - CSRF_TRUSTED_ORIGINS=https://yt-downloader.csambila.com
     volumes:
       - ytdownloader_staticfiles:/app/staticfiles
       - ytdownloader_media:/app/media
