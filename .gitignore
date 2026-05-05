@@ -1,12 +1,13 @@
-/temp_downloads
-/downloads
-/media
+temp_downloads/*
+downloads/*
+media/*
 
-*.sqlite3
+# *.sqlite3
 
 */__pycache__/
 */*/__pycache__/
+*/*/*/__pycache__/
 
 /.venv/
 
-.env
+# .env
