@@ -1,361 +1,1074 @@
 {% extends 'base.html' %}
-{% load static %}
 
-{% block title %}Universal Media Downloader - Download Videos & Images{% endblock %}
+{% block title %}GenDown — download videos from YouTube, TikTok, Instagram, Facebook &amp; more{% endblock %}
+{% block meta_description %}Free online downloader for YouTube, TikTok, Instagram, Facebook, X, Reddit, Vimeo, and more. Paste a link, choose quality, save to your device. No account.{% endblock %}
+
+{% block extra_css %}
+        .hero-h1 {
+            font-family: "Fraunces", Georgia, serif;
+            font-weight: 600;
+            font-size: clamp(1.75rem, 4vw, 2.35rem);
+            letter-spacing: -0.03em;
+            line-height: 1.2;
+            margin: 0 0 0.5rem;
+        }
+        .hero-lead { color: var(--muted); margin: 0 0 1.25rem; font-size: 0.98rem; }
+        .hero-lead strong { font-weight: 600; color: var(--ink); }
+        .url-field-wrap { display: flex; align-items: stretch; margin-top: 0.35rem; }
+        .url-input--with-paste {
+            flex: 1;
+            min-width: 0;
+            border-radius: 8px 0 0 8px;
+            border-right: none;
+            padding-right: 0.5rem;
+        }
+        .paste-btn {
+            flex-shrink: 0;
+            padding: 0 1rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            font-family: inherit;
+            color: var(--ink);
+            background: var(--bg);
+            border: 1px solid var(--line);
+            border-left: none;
+            border-radius: 0 8px 8px 0;
+            cursor: pointer;
+        }
+        .paste-btn:hover { background: #ebe6de; }
+        .legal-block {
+            margin-top: 2.5rem;
+            padding: 1.25rem 1.35rem;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            font-size: 0.88rem;
+            line-height: 1.65;
+            color: var(--muted);
+        }
+        .legal-title {
+            font-family: "Fraunces", Georgia, serif;
+            font-size: 1.15rem;
+            color: var(--ink);
+            margin: 0 0 0.75rem;
+        }
+        .legal-block h3 {
+            font-family: "Fraunces", Georgia, serif;
+            font-size: 1.05rem;
+            color: var(--ink);
+            margin: 1.1rem 0 0.45rem;
+        }
+        .legal-block h3:first-of-type { margin-top: 0; }
+        .legal-block p { margin: 0 0 0.65rem; }
+        .legal-block ul { margin: 0.35rem 0 0.65rem; padding-left: 1.2rem; }
+        .panel {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            padding: 1.25rem 1.35rem;
+        }
+        @media (min-width: 720px) {
+            .panel { padding: 1.5rem 1.75rem; }
+        }
+        .field-label {
+            display: block;
+            font-weight: 600;
+            font-size: 0.88rem;
+            margin-bottom: 0.45rem;
+        }
+        .url-input {
+            width: 100%;
+            padding: 0.85rem 1rem;
+            font-size: 1rem;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: #fff;
+            font-family: inherit;
+        }
+        .url-input:focus {
+            outline: 2px solid rgba(184, 50, 38, 0.35);
+            outline-offset: 1px;
+            border-color: var(--accent);
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.25rem;
+            font-size: 1rem;
+            font-weight: 600;
+            font-family: inherit;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: var(--accent);
+            color: #fff;
+            width: 100%;
+            margin-top: 0.85rem;
+        }
+        .btn:hover { background: var(--accent-hover); }
+        .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+        .btn-ghost {
+            background: transparent;
+            color: var(--muted);
+            border: 1px solid var(--line);
+            margin-top: 0.5rem;
+        }
+        .btn-ghost:hover { background: var(--bg); color: var(--ink); }
+        .loading-box {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: var(--muted);
+        }
+        .spinner {
+            width: 2.25rem;
+            height: 2.25rem;
+            border: 3px solid var(--line);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.75s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .result-grid {
+            display: grid;
+            gap: 1.25rem;
+            margin-top: 1.25rem;
+            padding-top: 1.25rem;
+            border-top: 1px solid var(--line);
+        }
+        @media (min-width: 640px) {
+            .result-grid { grid-template-columns: 200px 1fr; align-items: start; }
+        }
+        .thumb {
+            width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--line);
+            aspect-ratio: 16/10;
+            object-fit: cover;
+            background: var(--bg);
+        }
+        .meta-line { font-size: 0.9rem; color: var(--muted); margin: 0.2rem 0; }
+        .badge {
+            display: inline-block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--muted);
+            border: 1px solid var(--line);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            margin-right: 0.35rem;
+        }
+        .formats-title { font-size: 0.88rem; font-weight: 600; margin: 1rem 0 0.5rem; }
+        .formats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 0.5rem;
+        }
+        .fmt-btn {
+            padding: 0.65rem 0.75rem;
+            font-size: 0.88rem;
+            font-family: inherit;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: #fff;
+            cursor: pointer;
+            text-align: left;
+            line-height: 1.35;
+            transition: border-color 0.15s, background 0.15s;
+        }
+        .fmt-btn:hover {
+            border-color: var(--accent);
+            background: #fff8f7;
+        }
+        .fmt-btn small { display: block; color: var(--muted); font-size: 0.78rem; margin-top: 0.15rem; }
+        .download-progress-card {
+            margin-top: 1.25rem;
+            padding: 1.35rem 1rem 1.5rem;
+            text-align: center;
+            background: linear-gradient(165deg, #faf8f5 0%, var(--bg) 55%, #f0ebe4 100%);
+            border-radius: 12px;
+            border: 1px solid var(--line);
+            box-shadow: 0 2px 12px rgba(26, 24, 20, 0.06);
+        }
+        .dl-loader {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 1.1rem;
+            position: relative;
+        }
+        .dl-loader__ring {
+            position: absolute;
+            border-radius: 50%;
+            border: 3px solid transparent;
+        }
+        .dl-loader__ring--outer {
+            inset: 0;
+            border-top-color: var(--accent);
+            border-right-color: rgba(184, 50, 38, 0.25);
+            animation: dl-spin 1s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+        }
+        .dl-loader__ring--inner {
+            inset: 10px;
+            border-bottom-color: rgba(184, 50, 38, 0.55);
+            border-left-color: rgba(184, 50, 38, 0.12);
+            animation: dl-spin 1.35s linear infinite reverse;
+        }
+        .dl-loader__dot {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 10px;
+            height: 10px;
+            margin: -5px 0 0 -5px;
+            background: var(--accent);
+            border-radius: 50%;
+            animation: dl-pulse 1.2s ease-in-out infinite;
+            box-shadow: 0 0 0 0 rgba(184, 50, 38, 0.35);
+        }
+        @keyframes dl-spin { to { transform: rotate(360deg); } }
+        @keyframes dl-pulse {
+            0%, 100% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 0 rgba(184, 50, 38, 0.2); }
+            50% { transform: scale(0.85); opacity: 0.9; box-shadow: 0 0 0 12px rgba(184, 50, 38, 0); }
+        }
+        .progress-msg {
+            font-size: 1.02rem;
+            font-weight: 600;
+            color: var(--ink);
+            margin: 0 0 0.35rem;
+            line-height: 1.4;
+            min-height: 2.6em;
+        }
+        .dl-status-sub {
+            font-size: 0.86rem;
+            color: var(--muted);
+            margin: 0;
+            line-height: 1.45;
+        }
+        .section-title {
+            font-family: "Fraunces", Georgia, serif;
+            font-size: 1.45rem;
+            margin: 2.5rem 0 1rem;
+        }
+        .steps {
+            display: grid;
+            gap: 1rem;
+        }
+        @media (min-width: 720px) {
+            .steps { grid-template-columns: repeat(3, 1fr); }
+        }
+        .step {
+            padding: 1rem;
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            background: var(--surface);
+        }
+        .step-num {
+            font-weight: 700;
+            color: var(--accent);
+            font-size: 0.85rem;
+            margin-bottom: 0.35rem;
+        }
+        .faq details {
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 0.85rem 1rem;
+            margin-bottom: 0.5rem;
+            background: var(--surface);
+        }
+        .faq summary { cursor: pointer; font-weight: 600; }
+        .faq p { margin: 0.6rem 0 0; color: var(--muted); font-size: 0.92rem; }
+        .share-section {
+            margin-top: 2.25rem;
+            padding: 1.35rem 1.35rem 1.5rem;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+        }
+        .share-lead {
+            margin: 0 0 1.05rem;
+            font-size: 0.92rem;
+            color: var(--muted);
+            line-height: 1.55;
+        }
+        .share-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: stretch;
+        }
+        .share-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 0.45rem;
+            padding: 0.55rem 0.9rem;
+            font-size: 0.87rem;
+            font-family: inherit;
+            font-weight: 600;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: #fff;
+            color: var(--ink);
+            cursor: pointer;
+            transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+            text-decoration: none;
+            box-shadow: 0 1px 2px rgba(26, 24, 20, 0.04);
+        }
+        .share-btn:hover:not(:disabled) {
+            border-color: var(--accent);
+            background: #fff8f7;
+        }
+        .share-btn:disabled {
+            opacity: 0.55;
+            cursor: wait;
+        }
+        .share-btn svg {
+            width: 1.15rem;
+            height: 1.15rem;
+            flex-shrink: 0;
+            opacity: 0.88;
+        }
+        .share-btn--tw:hover:not(:disabled) { border-color: #111; }
+        .share-btn--wa:hover:not(:disabled) { border-color: #25d366; }
+        .share-btn--fb:hover:not(:disabled) { border-color: #1877f2; }
+        .share-btn--tg:hover:not(:disabled) { border-color: #26a5e4; }
+        .share-btn--li:hover:not(:disabled) { border-color: #0a66c2; }
+        .platforms-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem 1rem;
+            font-size: 0.88rem;
+            color: var(--muted);
+            margin-top: 0.75rem;
+        }
+        .hidden { display: none !important; }
+        .page-notice {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 0.75rem;
+            padding: 0.85rem 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--line);
+            margin-bottom: 1rem;
+            background: var(--surface);
+            font-size: 0.95rem;
+            line-height: 1.45;
+        }
+        .page-notice--error {
+            border-color: #c45c3e;
+            background: #fdf5f3;
+        }
+        .page-notice--hint {
+            border-color: #9cb8c4;
+            background: #f4f9fb;
+        }
+        .page-notice--hint.page-notice--error { border-color: #c45c3e; }
+        .page-notice button.close-notice {
+            flex-shrink: 0;
+            margin: -0.2rem -0.35rem 0 0;
+            padding: 0.15rem 0.45rem;
+            border: none;
+            background: transparent;
+            color: var(--muted);
+            font-size: 1.35rem;
+            line-height: 1;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .page-notice button.close-notice:hover { color: var(--ink); background: rgba(0,0,0,0.06); }
+        .loading-msg {
+            max-width: 22rem;
+            margin: 0 auto;
+            min-height: 3.2em;
+            line-height: 1.45;
+        }
+{% endblock %}
 
 {% block content %}
-<div class="max-w-6xl mx-auto px-4">
-    <!-- Supported Platforms Banner -->
-    <div class="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg shadow-lg p-6 mb-8 text-white">
-        <h2 class="text-2xl font-bold text-center mb-4">Supported Platforms</h2>
-        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
-            <div><i class="fab fa-youtube text-3xl"></i><p class="text-sm mt-1">YouTube</p></div>
-            <div><i class="fab fa-instagram text-3xl"></i><p class="text-sm mt-1">Instagram</p></div>
-            <div><i class="fab fa-facebook text-3xl"></i><p class="text-sm mt-1">Facebook</p></div>
-            <div><i class="fab fa-tiktok text-3xl"></i><p class="text-sm mt-1">TikTok</p></div>
-            <div><i class="fab fa-pinterest text-3xl"></i><p class="text-sm mt-1">Pinterest</p></div>
-            <div><i class="fab fa-twitter text-3xl"></i><p class="text-sm mt-1">Twitter/X</p></div>
-            <div><i class="fab fa-reddit text-3xl"></i><p class="text-sm mt-1">Reddit</p></div>
-            <div><i class="fab fa-vimeo text-3xl"></i><p class="text-sm mt-1">Vimeo</p></div>
-            <div><i class="fab fa-twitch text-3xl"></i><p class="text-sm mt-1">Twitch</p></div>
-            <div><i class="fas fa-video text-3xl"></i><p class="text-sm mt-1">Dailymotion</p></div>
+<div class="wrap">
+    <article id="tool">
+        <h1 class="hero-h1">Download videos &amp; media from popular sites</h1>
+        <p class="hero-lead">Paste a link from <strong>YouTube</strong>, <strong>TikTok</strong>, <strong>Instagram</strong>, <strong>Facebook</strong>, <strong>X</strong>, <strong>Reddit</strong>, <strong>Vimeo</strong>, and more. We fetch available formats; you pick quality—then your browser saves the file. No login here.</p>
+
+        <div class="ad-slot" aria-hidden="true">Advertisement</div>
+
+        <div id="pageNotice" class="page-notice hidden" role="alert" aria-live="assertive" hidden>
+            <span id="pageNoticeText"></span>
+            <button type="button" class="close-notice" id="pageNoticeClose" aria-label="Dismiss message">×</button>
         </div>
-    </div>
-    
-    <div class="bg-white rounded-lg shadow-lg p-6">
-        <h1 class="text-3xl font-bold text-center text-gray-800 mb-4">
-            Universal Media Downloader
-        </h1>
-        <p class="text-center text-gray-600 mb-8">
-            Download videos, images, and reels from any platform - Free & Fast
-        </p>
-        
-        <div class="mb-8">
-            <label class="block text-gray-700 text-sm font-bold mb-2">
-                Paste your media URL:
-            </label>
-            <input type="url" 
-                   id="mediaUrl" 
-                   placeholder="https://www.youtube.com/watch?v=... or https://www.instagram.com/p/..." 
-                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
-            <button id="fetchBtn" 
-                    class="mt-4 w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-lg hover:from-blue-700 hover:to-purple-700 transition duration-300 font-semibold">
-                <i class="fas fa-search mr-2"></i> Get Media Information
-            </button>
+
+        <div class="panel">
+            <label class="field-label" for="mediaUrl">Paste link here</label>
+            <div class="url-field-wrap">
+                <input type="text" id="mediaUrl" name="media_url" class="url-input url-input--with-paste" placeholder="https://youtube.com/…  tiktok.com/…  instagram.com/…" autocomplete="off" inputmode="url" spellcheck="false">
+                <button type="button" class="paste-btn" id="pasteBtn" title="Paste from clipboard">Paste</button>
+            </div>
+            <button type="button" class="btn" id="fetchBtn">Download</button>
         </div>
-        
-        <div id="loading" class="hidden text-center py-8">
-            <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            <p class="mt-4 text-gray-600">Fetching media information from server...</p>
+
+        <div id="loading" class="loading-box hidden" hidden>
+            <div class="spinner" aria-hidden="true"></div>
+            <p id="loadingMessage" class="loading-msg"></p>
         </div>
-        
-        <div id="videoInfo" class="hidden">
-            <div class="border-t pt-6">
-                <div class="flex flex-col md:flex-row gap-6">
-                    <img id="thumbnail" src="" alt="Media thumbnail" class="w-full md:w-64 rounded-lg shadow object-cover">
-                    <div class="flex-1">
-                        <div class="flex items-center gap-2 mb-2">
-                            <span id="platformIcon" class="text-2xl"></span>
-                            <span id="platform" class="text-sm font-semibold px-2 py-1 bg-gray-200 rounded"></span>
-                            <span id="mediaTypeBadge" class="text-sm font-semibold px-2 py-1 bg-blue-100 text-blue-800 rounded"></span>
-                        </div>
-                        <h2 id="title" class="text-xl font-bold text-gray-800 mb-2"></h2>
-                        <p class="text-gray-600 mb-1"><i class="fas fa-user mr-2"></i> <span id="uploader"></span></p>
-                        <p class="text-gray-600 mb-3"><i class="fas fa-clock mr-2"></i> Duration: <span id="duration"></span></p>
-                        
-                        <!-- Instagram specific info -->
-                        <div id="instagramInfo" class="hidden mb-3">
-                            <p id="caption" class="text-gray-600 text-sm italic mb-1"></p>
-                            <div class="flex gap-4 text-sm text-gray-500">
-                                <span><i class="fas fa-heart"></i> <span id="likeCount"></span> likes</span>
-                                <span><i class="fas fa-comment"></i> <span id="commentCount"></span> comments</span>
-                            </div>
-                        </div>
-                        
-                        <div class="mt-4">
-                            <h3 class="font-bold text-gray-700 mb-3">Available Formats:</h3>
-                            <div id="formats" class="grid grid-cols-2 md:grid-cols-4 gap-3"></div>
-                        </div>
+
+        <div id="videoInfo" class="panel hidden" hidden style="margin-top: 1rem;">
+            <div class="result-grid">
+                <img id="thumbnail" class="thumb" src="" alt="">
+                <div>
+                    <p><span class="badge" id="platform"></span><span class="badge" id="mediaTypeBadge"></span></p>
+                    <h2 id="title" style="font-size: 1.15rem; margin: 0.35rem 0 0.5rem; line-height: 1.35;"></h2>
+                    <p class="meta-line" id="uploaderLine"></p>
+                    <p class="meta-line" id="durationLine"></p>
+                    <div id="instagramInfo" class="hidden" hidden>
+                        <p class="meta-line" id="caption" style="font-style: italic;"></p>
                     </div>
+                    <p class="formats-title">Choose format</p>
+                    <div class="formats-grid" id="formats"></div>
                 </div>
             </div>
-        </div>
-        
-        <div id="downloadProgress" class="hidden mt-6">
-            <div class="bg-gray-200 rounded-full h-2 overflow-hidden">
-                <div id="progressBar" class="bg-gradient-to-r from-green-500 to-green-600 rounded-full h-2 transition-all duration-500" style="width: 0%"></div>
+            <div id="downloadProgress" class="download-progress-card hidden" hidden role="status" aria-live="polite">
+                <div class="dl-loader" aria-hidden="true">
+                    <div class="dl-loader__ring dl-loader__ring--outer"></div>
+                    <div class="dl-loader__ring dl-loader__ring--inner"></div>
+                    <div class="dl-loader__dot"></div>
+                </div>
+                <p class="progress-msg" id="downloadStatus">Please wait while we’re generating your download link…</p>
+                <p class="dl-status-sub" id="downloadSub">This can take a little—grab a coffee, stretch, or judge your wallpaper choices.</p>
             </div>
-            <p id="downloadStatus" class="text-center mt-3 text-gray-600">Starting download...</p>
         </div>
-    </div>
-    
-    <!-- Features Section -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-        <div class="bg-white rounded-lg shadow p-6 text-center">
-            <i class="fas fa-bolt text-3xl text-yellow-500 mb-3"></i>
-            <h3 class="font-bold text-lg mb-2">Fast Downloads</h3>
-            <p class="text-gray-600">High-speed downloading with async processing</p>
+    </article>
+
+    <section id="how" aria-labelledby="how-heading">
+        <h2 id="how-heading" class="section-title">How it works</h2>
+        <div class="steps">
+            <div class="step">
+                <div class="step-num">01</div>
+                <strong>Copy the URL</strong> from the app or browser address bar.
+            </div>
+            <div class="step">
+                <div class="step-num">02</div>
+                <strong>Paste the URL</strong> (use <strong>Paste</strong> or tap the field—existing text selects so you can replace it quickly).
+            </div>
+            <div class="step">
+                <div class="step-num">03</div>
+                <strong>Save the file.</strong> We store it on the server only long enough to transfer it to you, then remove it.
+            </div>
         </div>
-        <div class="bg-white rounded-lg shadow p-6 text-center">
-            <i class="fas fa-shield-alt text-3xl text-green-500 mb-3"></i>
-            <h3 class="font-bold text-lg mb-2">Secure & Free</h3>
-            <p class="text-gray-600">100% free and secure, no registration required</p>
-        </div>
-        <div class="bg-white rounded-lg shadow p-6 text-center">
-            <i class="fas fa-download text-3xl text-blue-500 mb-3"></i>
-            <h3 class="font-bold text-lg mb-2">Multiple Formats</h3>
-            <p class="text-gray-600">Download in various resolutions and formats</p>
-        </div>
-    </div>
-</div>
+        <p class="platforms-row">Works with many public pages: YouTube, Instagram, Facebook, TikTok, X, Reddit, Vimeo, Dailymotion, Twitch, Pinterest — whenever the source allows.</p>
+    </section>
 
-<script src="https://kit.fontawesome.com/your-fontawesome-kit.js"></script>
-<script>
-let currentDownloadId = null;
+    <section id="faq" class="faq" aria-labelledby="faq-heading">
+        <h2 id="faq-heading" class="section-title">Common questions</h2>
+        <details>
+            <summary>Do I need an account?</summary>
+            <p>No. There is no login and no public history of what you downloaded.</p>
+        </details>
+        <details>
+            <summary>How long is my file kept?</summary>
+            <p>Only for the transfer. After your browser finishes receiving it, the temporary copy is deleted.</p>
+        </details>
+        <details>
+            <summary>Is this legal?</summary>
+            <p>You are responsible for respecting copyright and each platform’s terms. Use GenDown only for content you have the right to save.</p>
+        </details>
+    </section>
 
-// Platform icons mapping
-const platformIcons = {
-    'youtube': '<i class="fab fa-youtube text-red-600"></i>',
-    'instagram': '<i class="fab fa-instagram text-pink-600"></i>',
-    'facebook': '<i class="fab fa-facebook text-blue-600"></i>',
-    'tiktok': '<i class="fab fa-tiktok"></i>',
-    'pinterest': '<i class="fab fa-pinterest text-red-600"></i>',
-    'twitter': '<i class="fab fa-twitter text-blue-400"></i>',
-    'reddit': '<i class="fab fa-reddit text-orange-600"></i>',
-    'vimeo': '<i class="fab fa-vimeo text-blue-600"></i>',
-    'dailymotion': '<i class="fab fa-dailymotion text-blue-600"></i>',
-    'twitch': '<i class="fab fa-twitch text-purple-600"></i>'
-};
-
-$('#fetchBtn').click(function() {
-    const url = $('#mediaUrl').val();
-    if (!url) {
-        alert('Please enter a media URL');
-        return;
-    }
-    
-    $('#loading').removeClass('hidden');
-    $('#videoInfo').addClass('hidden');
-    $('#downloadProgress').addClass('hidden');
-    
-    $.ajax({
-        url: '/get-media-info/',
-        method: 'POST',
-        data: { media_url: url },
-        headers: { 'X-CSRFToken': getCookie('csrftoken') },
-        success: function(data) {
-            if (data.status === 'processing') {
-                checkMediaStatus(data.task_id);
-            }
-        },
-        error: function(xhr) {
-            $('#loading').addClass('hidden');
-            alert('Error: ' + (xhr.responseJSON?.error || 'Something went wrong'));
-        }
-    });
-});
-
-function checkMediaStatus(taskId) {
-    $.get('/check-media-status/' + taskId + '/', function(data) {
-        if (data.status === 'loading') {
-            setTimeout(() => checkMediaStatus(taskId), 2000);
-        } else if (data.status === 'ready') {
-            $('#loading').addClass('hidden');
-            currentDownloadId = data.download_id;
-            displayMediaInfo(data);
-        } else if (data.status === 'error') {
-            $('#loading').addClass('hidden');
-            alert('Error: ' + data.error);
-        }
-    });
-}
-
-function displayMediaInfo(data) {
-    $('#thumbnail').attr('src', data.thumbnail || 'https://via.placeholder.com/300x200?text=No+Thumbnail');
-    $('#title').text(data.title);
-    $('#duration').text(data.duration || 'N/A');
-    $('#uploader').text(data.uploader || 'Unknown');
-    $('#platform').text(data.platform);
-    $('#platformIcon').html(platformIcons[data.platform.toLowerCase()] || '<i class="fas fa-video"></i>');
-    
-    // Show media type badge
-    let mediaTypeText = data.media_type === 'video' ? '🎬 Video' : (data.media_type === 'image' ? '🖼️ Image' : '📝 Post');
-    $('#mediaTypeBadge').text(mediaTypeText);
-    
-    // Show Instagram specific info
-    if (data.platform.toLowerCase() === 'instagram') {
-        $('#instagramInfo').removeClass('hidden');
-        $('#caption').text(data.caption || 'No caption');
-        $('#likeCount').text(data.like_count || 0);
-        $('#commentCount').text(data.comment_count || 0);
-    } else {
-        $('#instagramInfo').addClass('hidden');
-    }
-    
-    const formatsHtml = data.formats.map(fmt => {
-        let icon = fmt.media_type === 'video' ? '🎬' : (fmt.media_type === 'audio' ? '🎵' : '🖼️');
-        let sizeText = fmt.filesize !== 'Unknown' ? `(${fmt.filesize})` : '';
-        let buttonClass = fmt.media_type === 'video' ? 'bg-blue-600 hover:bg-blue-700' : 
-                         (fmt.media_type === 'audio' ? 'bg-green-600 hover:bg-green-700' : 'bg-purple-600 hover:bg-purple-700');
-        
-        return `
-            <button onclick="startDownload('${fmt.format_id}', '${fmt.media_type}')" 
-                    class="${buttonClass} text-white px-4 py-2 rounded-lg transition transform hover:scale-105">
-                ${icon} ${fmt.resolution} ${sizeText}
+    <section id="share" class="share-section" aria-labelledby="share-heading">
+        <h2 id="share-heading" class="section-title">Share GenDown</h2>
+        <p class="share-lead">If GenDown made your downloads easier, share it with others who might need it too.</p>
+        <div class="share-grid" id="shareGrid">
+            <button type="button" class="share-btn share-btn--wa" data-share="whatsapp" aria-label="Share on WhatsApp">
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.435 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                WhatsApp
             </button>
-        `;
-    }).join('');
-    
-    $('#formats').html(formatsHtml);
-    $('#videoInfo').removeClass('hidden');
-}
+            <button type="button" class="share-btn share-btn--tw" data-share="twitter" aria-label="Share on X">
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                X / Twitter
+            </button>
+            <button type="button" class="share-btn share-btn--fb" data-share="facebook" aria-label="Share on Facebook">
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                Facebook
+            </button>
+            <button type="button" class="share-btn share-btn--tg" data-share="telegram" aria-label="Share on Telegram">
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+                Telegram
+            </button>
+            <button type="button" class="share-btn share-btn--li" data-share="linkedin" aria-label="Share on LinkedIn">
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+                LinkedIn
+            </button>
+            <button type="button" class="share-btn" data-share="reddit" aria-label="Share on Reddit">
+                <svg viewBox="0 0 24 24" fill="#FF4500" aria-hidden="true"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52 4.482 4.482 0 0 1-2.018 3.735 4.42 4.42 0 0 1 .098.84c0 2.306-2.548 4.175-5.696 4.175-3.148 0-5.696-1.869-5.696-4.175 0-.286.023-.564.077-.84A4.448 4.448 0 0 1 7.11 14.26a4.482 4.482 0 0 1-2.018-3.735c0-.177.014-.353.042-.52-.575-.281-1.01-.898-1.01-1.614 0-.968.786-1.754 1.754-1.754.477 0 .899.182 1.207.491 1.194-.856 2.85-1.418 4.674-1.488l-.8-3.747-2.597.547a1.25 1.25 0 0 1-2.498-.056 1.25 1.25 0 0 1 1.249-1.249c.465 0 .858.254 1.081.624l2.94-.617a.624.624 0 0 1 .747.477l.888 4.161c1.879.07 3.577.654 4.796 1.536a1.248 1.248 0 0 1 1.207-.984z"/></svg>
+                Reddit
+            </button>
+            <button type="button" class="share-btn" data-share="email" aria-label="Share by email">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                Email
+            </button>
+            <button type="button" class="share-btn" data-share="sms" aria-label="Share via Messages / SMS">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                Messages
+            </button>
+            <button type="button" class="share-btn" data-share="copy" aria-label="Copy tracking link">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                Copy link
+            </button>
+            <button type="button" class="share-btn" data-share="native" aria-label="Use device share menu" id="shareNativeBtn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                Share…
+            </button>
+        </div>
+    </section>
 
-// Update the startDownload function
-function startDownload(formatId, mediaType) {
-    $('#downloadProgress').removeClass('hidden');
-    $('#progressBar').css('width', '0%');
-    $('#downloadStatus').text('Starting download...');
-    
-    $.ajax({
-        url: '/start-download/',
-        method: 'POST',
-        data: { 
-            download_id: currentDownloadId, 
-            format_id: String(formatId)  // Ensure format_id is string
-        },
-        headers: { 'X-CSRFToken': getCookie('csrftoken') },
-        success: function(data) {
-            if (data.status === 'downloading') {
-                checkDownloadStatus(data.task_id);
-            } else if (data.status === 'error') {
-                $('#downloadStatus').html(`
-                    <i class="fas fa-exclamation-triangle text-red-600 mr-2"></i>
-                    Error: ${data.error}
-                `);
-                setTimeout(() => $('#downloadProgress').addClass('hidden'), 5000);
+    <section id="legal" class="legal-block" aria-labelledby="legal-heading">
+        <h2 id="legal-heading" class="legal-title">Terms &amp; important notes</h2>
+        <p>GenDown is built to help you save your own uploads or media you have permission to download. We may be unable to serve links that would violate privacy, copyright, or a platform’s rules.</p>
+        <h3>Independence</h3>
+        <p>GenDown is an independent service. We are <strong>not affiliated with YouTube, Google, Meta, Instagram, TikTok, ByteDance, X, or other platforms</strong>. Their names and trademarks belong to their owners.</p>
+        <h3>Advertising &amp; cookies</h3>
+        <p>We may show ads to cover hosting and maintenance. Ad partners may use cookies or similar technologies to measure delivery. You can adjust cookie settings in your browser or stop using the site.</p>
+        <h3>Using GenDown</h3>
+        <p>Continued use means you accept these notices and future updates. If you disagree, please stop using the service.</p>
+        <p>For the full agreement and privacy details, see our <a href="{% url 'terms' %}">Terms of Service</a> and <a href="{% url 'privacy' %}">Privacy Policy</a>. Contact: <a href="mailto:info@gendownloader.com?subject=General%20-%20GenDown%20inquiry">info@gendownloader.com</a> (see the Privacy Policy for subject-line examples).</p>
+        <p style="margin-bottom: 0;">Only download content you are allowed to copy or store offline.</p>
+    </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    var currentDownloadId = null;
+    var stopLookupPhrases = null;
+    var stopDownloadPhrases = null;
+
+    var LOOKUP_PHRASES = [
+        'Reaching out to the source…',
+        'Waking up our fetcher…',
+        'Reading the page…',
+        'Locating the media…',
+        'Peeking at metadata…',
+        'Tracing the stream…',
+        'Figuring out what you shared…',
+        'Unpacking the link…',
+        'Counting available tracks…',
+        'Scanning for video…',
+        'Scanning for audio…',
+        'Listing resolutions…',
+        'Reading format tags…',
+        'Almost have a title…',
+        'Grabbing the thumbnail…',
+        'Checking duration…',
+        'Noting the uploader…',
+        'Mapping quality options…',
+        'This step can take a little…',
+        'Still talking to the host…',
+        'Sorting bitrates…',
+        'Filtering duplicates…',
+        'Preferring the best match…',
+        'Double-checking the URL…',
+        'Almost ready to show choices…',
+        'Hang tight—almost there…',
+        'Finalizing the format list…',
+        'One more round trip…',
+        'Wrapping up discovery…',
+        'Preparing your pick list…'
+    ];
+
+    var DOWNLOAD_PHRASES = [
+        'Generating your download link…',
+        'Cooking up that download link—almost fragrant.',
+        'Teaching electrons which way to run…',
+        'Negotiating with the internet gremlins…',
+        'Still here—your file is putting on its shoes.',
+        'Spinning up the hamster wheel (metaphorically).',
+        'Wrangling pixels into a ZIP-shaped hug.',
+        'Asking the server nicely. Again. Politely.',
+        'Quality takes a beat—boss-level patience unlocked.',
+        'Building your personal bridge from cloud to Downloads folder.',
+        'If this were a pizza, it’d be out of the oven soon.',
+        'Calmly herding bits into the right corral.',
+        'Almost ready to hand you something you can tap “Save” on.',
+        'Still generating—good things ignore stopwatches.',
+        'FYI: your download link is doing push-ups in the back room.',
+        'Convincing codecs to play nice. Drama resolved.',
+        'Loading… but make it ✨main-character energy✨.',
+        'Patience: the universe is aligning your filename.',
+        'Trust the process (and this spinner).',
+        'Hang tight—magic tricks take longer than card tricks.',
+        'Your link is almost dressed for the red carpet.',
+        'Generating download link—like baking, but fewer calories.',
+        'Servers whispering sweet nothings to your media…',
+        'Still working—closing this tab would hurt its feelings.',
+        'Almost there—entropy is losing today.',
+        'Packaging bytes with love and mild caffeine.',
+        'Final boss: bandwidth. We’re winning.',
+        'Your download link is warming up the runway.',
+        'Good news travels slowly when it’s heavy HD.',
+        'One more lap around the digital track…',
+        'Serious progress—a little patience goes a long way too.',
+        'Link incoming—charge your hype responsibly.'
+    ];
+
+    function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
             }
-        },
-        error: function(xhr) {
-            let errorMsg = 'Download failed to start';
-            if (xhr.responseJSON && xhr.responseJSON.error) {
-                errorMsg = xhr.responseJSON.error;
-            }
-            $('#downloadStatus').html(`
-                <i class="fas fa-exclamation-triangle text-red-600 mr-2"></i>
-                ${errorMsg}
-            `);
-            setTimeout(() => $('#downloadProgress').addClass('hidden'), 5000);
         }
-    });
-}
+        return cookieValue;
+    }
 
-// Update the checkDownloadStatus function
-function checkDownloadStatus(taskId) {
-    $.get('/check-download-status/' + taskId + '/', function(data) {
-        if (data.status === 'downloading') {
-            // Update progress bar
-            let progress = data.progress || 0;
-            $('#progressBar').css('width', progress + '%');
-            $('#downloadStatus').text(data.message || 'Downloading... ' + progress + '%');
-            setTimeout(() => checkDownloadStatus(taskId), 2000);
-        } else if (data.status === 'ready') {
-            $('#progressBar').css('width', '100%');
-            $('#downloadStatus').html(`
-                <i class="fas fa-check-circle text-green-600 mr-2"></i>
-                Download complete! Starting download...
-            `);
-            
-            // Auto-trigger download
-            triggerDownload(data.download_url, data.filename);
-            
-            // Reset UI after 3 seconds
-            setTimeout(() => {
-                $('#downloadProgress').fadeOut();
-                $('#videoInfo').addClass('hidden');
-                $('#mediaUrl').val('');
-                $('#progressBar').css('width', '0%');
-            }, 3000);
-        } else if (data.status === 'failed') {
-            $('#downloadStatus').html(`
-                <i class="fas fa-exclamation-triangle text-red-600 mr-2"></i>
-                Download failed: ${data.error}
-            `);
-            setTimeout(() => $('#downloadProgress').addClass('hidden'), 5000);
-        } else if (data.status === 'error') {
-            $('#downloadStatus').html(`
-                <i class="fas fa-exclamation-triangle text-red-600 mr-2"></i>
-                Error: ${data.error}
-            `);
-            setTimeout(() => $('#downloadProgress').addClass('hidden'), 5000);
-        }
-    });
-}
+    function show(el, showIt) {
+        if (!el) return;
+        el.hidden = !showIt;
+        el.classList.toggle('hidden', !showIt);
+    }
 
-// Add trigger download function
-function triggerDownload(downloadUrl, filename) {
-    // Create a temporary anchor element
-    const link = document.createElement('a');
-    link.href = downloadUrl;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-}
+    function showNotice(message, isError) {
+        var box = document.getElementById('pageNotice');
+        var text = document.getElementById('pageNoticeText');
+        if (!box || !text) return;
+        text.textContent = message || 'Something went wrong.';
+        box.classList.remove('page-notice--hint');
+        box.classList.toggle('page-notice--error', !!isError);
+        show(box, true);
+        try {
+            box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        } catch (e) { /* ignore */ }
+    }
 
-// Update startDownload function
-function startDownload(formatId, mediaType) {
-    // Show progress indicator
-    $('#downloadProgress').removeClass('hidden');
-    $('#progressBar').css('width', '0%');
-    $('#downloadStatus').html('<i class="fas fa-spinner fa-pulse mr-2"></i> Starting download...');
-    
-    $.ajax({
-        url: '/start-download/',
-        method: 'POST',
-        data: { 
-            download_id: currentDownloadId, 
-            format_id: String(formatId)
-        },
-        headers: { 'X-CSRFToken': getCookie('csrftoken') },
-        success: function(data) {
-            if (data.status === 'downloading') {
-                // Start polling for status
-                checkDownloadStatus(data.task_id);
-            } else if (data.status === 'error') {
-                $('#downloadStatus').html(`
-                    <i class="fas fa-exclamation-triangle text-red-600 mr-2"></i>
-                    Error: ${data.error}
-                `);
-                setTimeout(() => $('#downloadProgress').addClass('hidden'), 5000);
-            }
-        },
-        error: function(xhr) {
-            let errorMsg = 'Download failed to start';
-            if (xhr.responseJSON && xhr.responseJSON.error) {
-                errorMsg = xhr.responseJSON.error;
-            }
-            $('#downloadStatus').html(`
-                <i class="fas fa-exclamation-triangle text-red-600 mr-2"></i>
-                ${errorMsg}
-            `);
-            setTimeout(() => $('#downloadProgress').addClass('hidden'), 5000);
-        }
-    });
-}
+    function showHintNotice(message) {
+        var box = document.getElementById('pageNotice');
+        var text = document.getElementById('pageNoticeText');
+        if (!box || !text) return;
+        text.textContent = message || '';
+        box.classList.remove('page-notice--error');
+        box.classList.add('page-notice--hint');
+        show(box, true);
+        try {
+            box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        } catch (e) { /* ignore */ }
+    }
 
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
+    function hideNotice() {
+        var box = document.getElementById('pageNotice');
+        if (box) {
+            box.classList.remove('page-notice--hint');
+            show(box, false);
         }
     }
-    return cookieValue;
-}
+
+    function startPhraseCycle(el, phrases, intervalMs) {
+        if (!el || !phrases.length) {
+            return function () {};
+        }
+        var i = Math.floor(Math.random() * phrases.length);
+        el.textContent = phrases[i];
+        var id = setInterval(function () {
+            i = (i + 1) % phrases.length;
+            el.textContent = phrases[i];
+        }, intervalMs || 5000);
+        return function () { clearInterval(id); };
+    }
+
+    function parseJsonSafe(r) {
+        return r.text().then(function (t) {
+            try {
+                return JSON.parse(t);
+            } catch (e) {
+                return { _parseError: true, raw: t };
+            }
+        });
+    }
+
+    document.getElementById('pageNoticeClose').addEventListener('click', hideNotice);
+
+    (function setupUrlField() {
+        var urlEl = document.getElementById('mediaUrl');
+        var pasteBtn = document.getElementById('pasteBtn');
+        if (!urlEl) return;
+        urlEl.addEventListener('focus', function () {
+            var self = this;
+            requestAnimationFrame(function () {
+                if (self.value) self.select();
+            });
+        });
+        if (pasteBtn) {
+            pasteBtn.addEventListener('click', function () {
+                if (!navigator.clipboard || typeof navigator.clipboard.readText !== 'function') {
+                    showNotice('Use Ctrl+V (or long-press) to paste. Clipboard read needs a secure page (HTTPS).', true);
+                    urlEl.focus();
+                    return;
+                }
+                function readClipboard() {
+                    return navigator.clipboard.readText().then(function (t) {
+                        urlEl.value = (t || '').trim();
+                        urlEl.focus();
+                        urlEl.select();
+                        hideNotice();
+                    });
+                }
+                function afterPermissionCheck() {
+                    return readClipboard().catch(function () {
+                        showNotice('Could not read the clipboard. Allow access if your browser asked—or paste with Ctrl+V.', true);
+                        urlEl.focus();
+                    });
+                }
+                if (navigator.permissions && navigator.permissions.query) {
+                    navigator.permissions.query({ name: 'clipboard-read' }).then(function (status) {
+                        if (status.state === 'denied') {
+                            showNotice('Clipboard access is blocked for this site. Enable it in your browser settings for this page, or use Ctrl+V.', true);
+                            urlEl.focus();
+                            return;
+                        }
+                        if (status.state === 'prompt' && !sessionStorage.getItem('gd_clipboard_hint')) {
+                            sessionStorage.setItem('gd_clipboard_hint', '1');
+                            showHintNotice('Your browser may ask to allow clipboard access—tap Allow so we can paste your copied link.');
+                            window.setTimeout(function () { afterPermissionCheck(); }, 500);
+                            return;
+                        }
+                        afterPermissionCheck();
+                    }).catch(function () {
+                        if (!sessionStorage.getItem('gd_clipboard_fallback_hint')) {
+                            sessionStorage.setItem('gd_clipboard_fallback_hint', '1');
+                            showHintNotice('If a permission popup appears, choose Allow to paste from the clipboard.');
+                            window.setTimeout(function () { afterPermissionCheck(); }, 450);
+                        } else {
+                            afterPermissionCheck();
+                        }
+                    });
+                } else {
+                    if (!sessionStorage.getItem('gd_clipboard_basic_hint')) {
+                        sessionStorage.setItem('gd_clipboard_basic_hint', '1');
+                        showHintNotice('If your browser asks for clipboard permission, tap Allow to paste.');
+                        window.setTimeout(function () { afterPermissionCheck(); }, 450);
+                    } else {
+                        afterPermissionCheck();
+                    }
+                }
+            });
+        }
+    })();
+
+    function pollMedia(taskId) {
+        fetch('/check-media-status/' + taskId + '/')
+            .then(function (r) { return parseJsonSafe(r); })
+            .then(function (data) {
+                if (data._parseError) {
+                    if (stopLookupPhrases) { stopLookupPhrases(); stopLookupPhrases = null; }
+                    show(document.getElementById('loading'), false);
+                    showNotice('Unexpected response from server.', true);
+                    return;
+                }
+                if (data.status === 'loading') {
+                    setTimeout(function () { pollMedia(taskId); }, 1500);
+                } else if (data.status === 'ready') {
+                    if (stopLookupPhrases) { stopLookupPhrases(); stopLookupPhrases = null; }
+                    show(document.getElementById('loading'), false);
+                    currentDownloadId = data.download_id;
+                    displayMediaInfo(data);
+                } else if (data.status === 'error') {
+                    if (stopLookupPhrases) { stopLookupPhrases(); stopLookupPhrases = null; }
+                    show(document.getElementById('loading'), false);
+                    showNotice(data.error || 'Could not read that link.', true);
+                }
+            })
+            .catch(function () {
+                if (stopLookupPhrases) { stopLookupPhrases(); stopLookupPhrases = null; }
+                show(document.getElementById('loading'), false);
+                showNotice('Network error. Check your connection and try again.', true);
+            });
+    }
+
+    function displayMediaInfo(data) {
+        var thumb = document.getElementById('thumbnail');
+        if (data.thumbnail) {
+            thumb.src = data.thumbnail;
+            thumb.alt = data.title || 'Thumbnail';
+            thumb.style.display = '';
+        } else {
+            thumb.removeAttribute('src');
+            thumb.style.display = 'none';
+        }
+        document.getElementById('title').textContent = data.title || 'Untitled';
+        document.getElementById('platform').textContent = data.platform || '';
+        var mt = (data.media_type || '').toLowerCase();
+        var mtLabel = mt === 'video' ? 'Video' : mt === 'image' ? 'Image' : mt === 'audio' ? 'Audio' : 'Media';
+        document.getElementById('mediaTypeBadge').textContent = mtLabel;
+        document.getElementById('uploaderLine').textContent = data.uploader ? 'By ' + data.uploader : '';
+        document.getElementById('durationLine').textContent = data.duration ? 'Length: ' + data.duration : '';
+
+        var ig = document.getElementById('instagramInfo');
+        var plat = (data.platform || '').toLowerCase();
+        if (plat.indexOf('instagram') !== -1 && data.caption) {
+            show(ig, true);
+            document.getElementById('caption').textContent = data.caption;
+        } else {
+            show(ig, false);
+        }
+
+        var container = document.getElementById('formats');
+        container.innerHTML = '';
+        (data.formats || []).forEach(function (fmt) {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'fmt-btn';
+            var line1 = document.createTextNode(fmt.resolution || 'Format');
+            var small = document.createElement('small');
+            var bits = [fmt.extension || ''];
+            if (fmt.filesize && fmt.filesize !== 'Unknown') bits.push(fmt.filesize);
+            small.textContent = bits.filter(Boolean).join(' · ');
+            btn.appendChild(line1);
+            btn.appendChild(small);
+            btn.addEventListener('click', function () {
+                startDownload(String(fmt.format_id));
+            });
+            container.appendChild(btn);
+        });
+
+        show(document.getElementById('videoInfo'), true);
+    }
+
+    function pollDownload(taskId) {
+        fetch('/check-download-status/' + taskId + '/')
+            .then(function (r) { return parseJsonSafe(r); })
+            .then(function (data) {
+                var msg = document.getElementById('downloadStatus');
+                if (data._parseError) {
+                    if (stopDownloadPhrases) { stopDownloadPhrases(); stopDownloadPhrases = null; }
+                    if (msg) msg.textContent = 'Lost contact with the server.';
+                    showNotice('Unexpected response while preparing your file.', true);
+                    setTimeout(function () { show(document.getElementById('downloadProgress'), false); }, 5000);
+                    return;
+                }
+                if (data.status === 'downloading') {
+                    setTimeout(function () { pollDownload(taskId); }, 1500);
+                } else if (data.status === 'ready') {
+                    if (stopDownloadPhrases) { stopDownloadPhrases(); stopDownloadPhrases = null; }
+                    if (msg) msg.textContent = 'Opening your download…';
+                    var sub = document.getElementById('downloadSub');
+                    if (sub) sub.textContent = 'Redirecting you to pick up the file.';
+                    window.location.href = data.redirect_url;
+                } else if (data.status === 'failed' || data.status === 'error') {
+                    if (stopDownloadPhrases) { stopDownloadPhrases(); stopDownloadPhrases = null; }
+                    if (msg) msg.textContent = data.error || 'Download failed.';
+                    showNotice(data.error || 'Download did not finish.', true);
+                    setTimeout(function () {
+                        show(document.getElementById('downloadProgress'), false);
+                    }, 8000);
+                }
+            })
+            .catch(function () {
+                if (stopDownloadPhrases) { stopDownloadPhrases(); stopDownloadPhrases = null; }
+                var msg = document.getElementById('downloadStatus');
+                if (msg) msg.textContent = 'Something went wrong.';
+                showNotice('Network error while preparing the file.', true);
+            });
+    }
+
+    function startDownload(formatId) {
+        if (!currentDownloadId) return;
+        hideNotice();
+        show(document.getElementById('downloadProgress'), true);
+        var msgEl = document.getElementById('downloadStatus');
+        var subEl = document.getElementById('downloadSub');
+        if (subEl) subEl.textContent = 'Hang on—good bytes take a moment.';
+        if (stopDownloadPhrases) { stopDownloadPhrases(); stopDownloadPhrases = null; }
+        stopDownloadPhrases = startPhraseCycle(msgEl, DOWNLOAD_PHRASES, 4500);
+
+        fetch('/start-download/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: 'download_id=' + encodeURIComponent(currentDownloadId) + '&format_id=' + encodeURIComponent(formatId)
+        })
+            .then(function (r) {
+                return parseJsonSafe(r).then(function (data) {
+                    return { ok: r.ok, status: r.status, data: data };
+                });
+            })
+            .then(function (res) {
+                var data = res.data || {};
+                if (!res.ok || data.error || data._parseError) {
+                    if (stopDownloadPhrases) { stopDownloadPhrases(); stopDownloadPhrases = null; }
+                    show(document.getElementById('downloadProgress'), false);
+                    var err = data.error || (data._parseError ? 'Bad response from server.' : ('Request failed (' + res.status + ')'));
+                    showNotice(err, true);
+                    return;
+                }
+                if (data.status === 'downloading' && data.task_id) {
+                    pollDownload(data.task_id);
+                } else {
+                    if (stopDownloadPhrases) { stopDownloadPhrases(); stopDownloadPhrases = null; }
+                    show(document.getElementById('downloadProgress'), false);
+                    var why = data.error || 'Could not start the download.';
+                    showNotice(why, true);
+                }
+            })
+            .catch(function () {
+                if (stopDownloadPhrases) { stopDownloadPhrases(); stopDownloadPhrases = null; }
+                show(document.getElementById('downloadProgress'), false);
+                showNotice('Network error. Try again in a moment.', true);
+            });
+    }
+
+    document.getElementById('fetchBtn').addEventListener('click', function () {
+        var url = document.getElementById('mediaUrl').value.trim();
+        if (!url) {
+            showNotice('Paste a video or post link first.', true);
+            return;
+        }
+        hideNotice();
+        if (stopLookupPhrases) { stopLookupPhrases(); stopLookupPhrases = null; }
+        show(document.getElementById('loading'), true);
+        var lm = document.getElementById('loadingMessage');
+        stopLookupPhrases = startPhraseCycle(lm, LOOKUP_PHRASES, 5000);
+        show(document.getElementById('videoInfo'), false);
+        show(document.getElementById('downloadProgress'), false);
+
+        fetch('/get-media-info/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: 'media_url=' + encodeURIComponent(url)
+        })
+            .then(function (r) {
+                return parseJsonSafe(r).then(function (data) {
+                    return { ok: r.ok, data: data };
+                });
+            })
+            .then(function (res) {
+                if (!res.ok) {
+                    if (stopLookupPhrases) { stopLookupPhrases(); stopLookupPhrases = null; }
+                    show(document.getElementById('loading'), false);
+                    var m = (res.data && res.data.error) ? res.data.error : 'Could not start lookup.';
+                    showNotice(m, true);
+                    return;
+                }
+                var data = res.data;
+                if (data.task_id) {
+                    pollMedia(data.task_id);
+                } else {
+                    if (stopLookupPhrases) { stopLookupPhrases(); stopLookupPhrases = null; }
+                    show(document.getElementById('loading'), false);
+                    showNotice(data.error || 'Invalid request.', true);
+                }
+            })
+            .catch(function () {
+                if (stopLookupPhrases) { stopLookupPhrases(); stopLookupPhrases = null; }
+                show(document.getElementById('loading'), false);
+                showNotice('Network error. Check your connection and try again.', true);
+            });
+    });
+
+    document.getElementById('mediaUrl').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            document.getElementById('fetchBtn').click();
+        }
+    });
+
+    var SHARE_BLURB = 'GenDown — paste a link from YouTube, TikTok, Instagram & more and pick quality. Free, no account.';
+
+    function registerShareChannel(channel) {
+        return fetch('/share/register/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ channel: channel })
+        }).then(function (r) {
+            return r.json().then(function (data) {
+                if (!r.ok) throw new Error((data && data.error) || 'Could not create share link');
+                if (data.error) throw new Error(data.error);
+                return data.share_url;
+            });
+        });
+    }
+
+    function openShareDestination(channel, url) {
+        var encUrl = encodeURIComponent(url);
+        var encBlurb = encodeURIComponent(SHARE_BLURB);
+        var encBoth = encodeURIComponent(SHARE_BLURB + '\n\n' + url);
+        if (channel === 'whatsapp') {
+            window.open('https://wa.me/?text=' + encBoth, '_blank', 'noopener,noreferrer');
+        } else if (channel === 'twitter') {
+            window.open('https://twitter.com/intent/tweet?text=' + encBlurb + '&url=' + encUrl, '_blank', 'noopener,noreferrer');
+        } else if (channel === 'facebook') {
+            window.open('https://www.facebook.com/sharer/sharer.php?u=' + encUrl, '_blank', 'noopener,noreferrer');
+        } else if (channel === 'telegram') {
+            window.open('https://t.me/share/url?url=' + encUrl + '&text=' + encBlurb, '_blank', 'noopener,noreferrer');
+        } else if (channel === 'linkedin') {
+            window.open('https://www.linkedin.com/sharing/share-offsite/?url=' + encUrl, '_blank', 'noopener,noreferrer');
+        } else if (channel === 'reddit') {
+            window.open('https://www.reddit.com/submit?url=' + encUrl + '&title=' + encBlurb, '_blank', 'noopener,noreferrer');
+        } else if (channel === 'email') {
+            window.location.href = 'mailto:?subject=' + encodeURIComponent('GenDown — video downloader') + '&body=' + encBoth;
+        } else if (channel === 'sms') {
+            window.location.href = 'sms:&body=' + encBoth;
+        }
+    }
+
+    var shareGrid = document.getElementById('shareGrid');
+    var shareNativeBtn = document.getElementById('shareNativeBtn');
+    if (shareNativeBtn && !navigator.share) {
+        shareNativeBtn.style.display = 'none';
+    }
+    if (shareGrid) {
+        shareGrid.addEventListener('click', function (ev) {
+            var btn = ev.target.closest('[data-share]');
+            if (!btn) return;
+            var channel = btn.getAttribute('data-share');
+            if (!channel) return;
+            btn.disabled = true;
+            registerShareChannel(channel).then(function (url) {
+                btn.disabled = false;
+                if (channel === 'copy') {
+                    if (!navigator.clipboard || typeof navigator.clipboard.writeText !== 'function') {
+                        showNotice('Copy failed—select and copy the address bar, or try HTTPS.', true);
+                        return;
+                    }
+                    return navigator.clipboard.writeText(url).then(function () {
+                        showHintNotice('Tracking link copied. Paste it anywhere you like.');
+                    }).catch(function () {
+                        showNotice('Could not copy to clipboard.', true);
+                    });
+                }
+                if (channel === 'native') {
+                    if (navigator.share) {
+                        return navigator.share({
+                            title: 'GenDown',
+                            text: SHARE_BLURB,
+                            url: url
+                        }).catch(function () { /* user cancelled */ });
+                    }
+                    showNotice('Sharing isn’t available here—try Copy link.', true);
+                    return;
+                }
+                openShareDestination(channel, url);
+            }).catch(function (err) {
+                btn.disabled = false;
+                showNotice((err && err.message) ? err.message : 'Could not prepare share link.', true);
+            });
+        });
+    }
+})();
 </script>
 {% endblock %}
