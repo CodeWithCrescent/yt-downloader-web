@@ -21,6 +21,7 @@ services:
       - CELERY_RESULT_BACKEND=redis://uhuru_pos_redis:6379/0
       - ALLOWED_HOSTS=yt-downloader.csambila.com
     volumes:
+      - ytdownloader_staticfiles:/app/staticfiles
       - ytdownloader_media:/app/media
       - ytdownloader_temp_downloads:/app/temp_downloads
     networks:
@@ -134,6 +135,7 @@ services:
       - ALL
 
 volumes:
+  ytdownloader_staticfiles:
   ytdownloader_media:
   ytdownloader_temp_downloads:
 
