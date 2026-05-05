@@ -16,7 +16,14 @@ python manage.py runserver
 sudo apt-get install ffmpeg
 
 
+# == RUN NORMAL
+nano /etc/systemd/system/ytdownloader-gunicorn.service
+/etc/systemd/system/ytdownloader-beat.service
+/etc/systemd/system/ytdownloader-worker.service
 
+/etc/docker-setup/traefik/yt-downloader.yml
+
+gunicorn core.wsgi:application --bind 127.0.0.1:9000 --workers 3 --timeout 120
 
 # ==TODO ==
 - [ ] Add country detection (https://country.is/)
