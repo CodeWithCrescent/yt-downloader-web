@@ -20,7 +20,7 @@ instaloader==4.15.1
 kombu==5.6.2
 packaging==26.2
 prompt_toolkit==3.0.52
-psycopg-binary==3.3.4
+psycopg[binary]==3.3.4
 python-dateutil==2.9.0.post0
 python-dotenv==1.2.2
 redis==7.4.0
