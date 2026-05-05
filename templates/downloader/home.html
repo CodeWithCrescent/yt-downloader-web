@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}GenDown — download videos from YouTube, TikTok, Instagram, Facebook &amp; more{% endblock %}
+{% block title %}YTDownloader — download videos from YouTube, TikTok, Instagram, Facebook &amp; more{% endblock %}
 {% block meta_description %}Free online downloader for YouTube, TikTok, Instagram, Facebook, X, Reddit, Vimeo, and more. Paste a link, choose quality, save to your device. No account.{% endblock %}
 
 {% block extra_css %}
@@ -474,13 +474,13 @@
         </details>
         <details>
             <summary>Is this legal?</summary>
-            <p>You are responsible for respecting copyright and each platform’s terms. Use GenDown only for content you have the right to save.</p>
+            <p>You are responsible for respecting copyright and each platform’s terms. Use YTDownloader only for content you have the right to save.</p>
         </details>
     </section>
 
     <section id="share" class="share-section" aria-labelledby="share-heading">
-        <h2 id="share-heading" class="section-title">Share GenDown</h2>
-        <p class="share-lead">If GenDown made your downloads easier, share it with others who might need it too.</p>
+        <h2 id="share-heading" class="section-title">Share YTDownloader</h2>
+        <p class="share-lead">If YTDownloader made your downloads easier, share it with others who might need it too.</p>
         <div class="share-grid" id="shareGrid">
             <button type="button" class="share-btn share-btn--wa" data-share="whatsapp" aria-label="Share on WhatsApp">
                 <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.435 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
@@ -527,14 +527,14 @@
 
     <section id="legal" class="legal-block" aria-labelledby="legal-heading">
         <h2 id="legal-heading" class="legal-title">Terms &amp; important notes</h2>
-        <p>GenDown is built to help you save your own uploads or media you have permission to download. We may be unable to serve links that would violate privacy, copyright, or a platform’s rules.</p>
+        <p>YTDownloader is built to help you save your own uploads or media you have permission to download. We may be unable to serve links that would violate privacy, copyright, or a platform’s rules.</p>
         <h3>Independence</h3>
-        <p>GenDown is an independent service. We are <strong>not affiliated with YouTube, Google, Meta, Instagram, TikTok, ByteDance, X, or other platforms</strong>. Their names and trademarks belong to their owners.</p>
+        <p>YTDownloader is an independent service. We are <strong>not affiliated with YouTube, Google, Meta, Instagram, TikTok, ByteDance, X, or other platforms</strong>. Their names and trademarks belong to their owners.</p>
         <h3>Advertising &amp; cookies</h3>
         <p>We may show ads to cover hosting and maintenance. Ad partners may use cookies or similar technologies to measure delivery. You can adjust cookie settings in your browser or stop using the site.</p>
-        <h3>Using GenDown</h3>
+        <h3>Using YTDownloader</h3>
         <p>Continued use means you accept these notices and future updates. If you disagree, please stop using the service.</p>
-        <p>For the full agreement and privacy details, see our <a href="{% url 'terms' %}">Terms of Service</a> and <a href="{% url 'privacy' %}">Privacy Policy</a>. Contact: <a href="mailto:info@gendownloader.com?subject=General%20-%20GenDown%20inquiry">info@gendownloader.com</a> (see the Privacy Policy for subject-line examples).</p>
+        <p>For the full agreement and privacy details, see our <a href="{% url 'terms' %}">Terms of Service</a> and <a href="{% url 'privacy' %}">Privacy Policy</a>. Contact: <a href="mailto:info@gendownloader.com?subject=General%20-%20YTDownloader%20inquiry">info@gendownloader.com</a> (see the Privacy Policy for subject-line examples).</p>
         <p style="margin-bottom: 0;">Only download content you are allowed to copy or store offline.</p>
     </section>
 </div>
@@ -984,7 +984,7 @@
         }
     });
 
-    var SHARE_BLURB = 'GenDown — paste a link from YouTube, TikTok, Instagram & more and pick quality. Free, no account.';
+    var SHARE_BLURB = 'YTDownloader — paste a link from YouTube, TikTok, Instagram & more and pick quality. Free, no account.';
 
     function registerShareChannel(channel) {
         return fetch('/share/register/', {
@@ -1020,7 +1020,7 @@
         } else if (channel === 'reddit') {
             window.open('https://www.reddit.com/submit?url=' + encUrl + '&title=' + encBlurb, '_blank', 'noopener,noreferrer');
         } else if (channel === 'email') {
-            window.location.href = 'mailto:?subject=' + encodeURIComponent('GenDown — video downloader') + '&body=' + encBoth;
+            window.location.href = 'mailto:?subject=' + encodeURIComponent('YTDownloader — video downloader') + '&body=' + encBoth;
         } else if (channel === 'sms') {
             window.location.href = 'sms:&body=' + encBoth;
         }
@@ -1054,7 +1054,7 @@
                 if (channel === 'native') {
                     if (navigator.share) {
                         return navigator.share({
-                            title: 'GenDown',
+                            title: 'YTDownloader',
                             text: SHARE_BLURB,
                             url: url
                         }).catch(function () { /* user cancelled */ });
