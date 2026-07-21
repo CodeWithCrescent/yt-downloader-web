@@ -7,7 +7,6 @@ from .models import ShareLink, SiteVisit
 
 logger = logging.getLogger(__name__)
 
-# Human-facing HTML routes only (exclude JSON/API-only paths so stats stay meaningful).
 TRACKED_PATHS = frozenset({"/", "/terms/", "/privacy/"})
 
 
