@@ -46,7 +46,7 @@ if USE_TLS_PROXY:
 if not DEBUG:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
-    SECURE_SSL_REDIRECT = False  # Traefik already terminates TLS; do not redirect inside app
+    SECURE_SSL_REDIRECT = False
 
 
 # Application definition
